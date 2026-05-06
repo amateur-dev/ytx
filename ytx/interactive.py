@@ -271,21 +271,21 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
     has_keys = has_cloud_api_key()
     
     translation_choices = [
-        questionary.Choice("🛑 Do not translate (Keep original detected language)", value="no"),
+        questionary.Choice("🛑 No, keep the raw transcript as-is", value="no"),
         questionary.Choice("Yes, translate using local offline AI (Argos - basic quality)", value="argos"),
     ]
     
     for tool in local_tools:
         translation_choices.append(
-            questionary.Choice(f"✨ Yes, translate using your installed {tool}", value=f"cli_{tool.lower().replace(' ', '_')}")
+            questionary.Choice(f"✨ Yes, clean up and/or translate using your installed {tool}", value=f"cli_{tool.lower().replace(' ', '_')}")
         )
         
     translation_choices.append(
-        questionary.Choice("✨ Yes, translate using Cloud API", value="cloud", disabled="No API key configured" if not has_keys else None)
+        questionary.Choice("✨ Yes, clean up and/or translate using Cloud API", value="cloud", disabled="No API key configured" if not has_keys else None)
     )
 
     translate_choice = questionary.select(
-        "Do you want to translate the transcript?",
+        "Do you want to process/translate the transcript with AI?",
         choices=translation_choices
     ).ask()
     

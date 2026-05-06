@@ -45,7 +45,7 @@ def _install_argos_package(from_code: str, to_code: str) -> bool:
     return False
 
 def translate_with_cloud(segments: List[Dict[str, Any]], source_lang: str, target_lang: str) -> List[Dict[str, Any]]:
-    """Translate segments using litellm to leverage whatever Cloud API key is available."""
+    """Translate or clean segments using litellm to leverage whatever Cloud API key is available."""
     try:
         import litellm
         
@@ -69,23 +69,39 @@ def translate_with_cloud(segments: List[Dict[str, Any]], source_lang: str, targe
         console.print("[bold red]No valid Cloud API key found in environment.[/bold red]")
         return None
 
+    is_same_lang = (source_lang == target_lang)
+    
+    if is_same_lang:
+        system_role = "You are an expert transcript editor. You only output valid JSON arrays without markdown wrappers."
+        task_instruction = (
+            f"Clean up and format the following JSON subtitle segments in {source_lang}.\n"
+            f"Fix grammar/spelling and silently remove repetitive hallucinations (e.g., repeating nonsense) caused by background noise.\n"
+            f"Do NOT translate it to another language."
+        )
+        action_msg = f"🧹 [cyan]Running AI clean-up pass on {source_lang} transcript ({model})...[/cyan]"
+    else:
+        system_role = "You are a precise subtitle translator and editor. You only output valid JSON arrays without markdown wrappers."
+        task_instruction = (
+            f"Translate the following JSON subtitle segments from {source_lang} to {target_lang}.\n"
+            f"IMPORTANT: While translating, also act as a clean-up editor. If you see repetitive hallucinations "
+            f"(e.g., repeating the same word infinitely) caused by background noise, silently remove the gibberish."
+        )
+        action_msg = f"☁️  [cyan]Translating to {target_lang} using Cloud API ({model})...[/cyan]"
+
     prompt = (
-        f"Translate the following JSON subtitle segments from {source_lang} to {target_lang}.\n"
+        f"{task_instruction}\n"
         f"Maintain the exact JSON structure. Do NOT change the 'start' or 'end' timestamps.\n"
-        f"IMPORTANT: While translating, also act as a clean-up editor. If you see repetitive hallucinations "
-        f"(e.g., repeating the same word infinitely like 'WorkingWorkingWorking') caused by background noise, "
-        f"silently remove the gibberish and output clean, readable text.\n"
         f"Output ONLY valid JSON. Do not include markdown formatting like ```json.\n\n"
         f"{json.dumps(segments, ensure_ascii=False)}"
     )
 
-    console.print(f"☁️  [cyan]Translating to {target_lang} using Cloud API ({model})...[/cyan]")
+    console.print(action_msg)
     
     try:
         response = litellm.completion(
             model=model,
             messages=[
-                {"role": "system", "content": "You are a precise subtitle translator. You only output valid JSON arrays without markdown wrappers."},
+                {"role": "system", "content": system_role},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.1
@@ -108,7 +124,7 @@ def translate_with_cloud(segments: List[Dict[str, Any]], source_lang: str, targe
         return None
 
 def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_lang: str, cli_name: str, cli_command: str) -> List[Dict[str, Any]]:
-    """Translate segments by writing them to a temp file and passing instructions to a local AI CLI tool."""
+    """Translate or clean segments by writing them to a temp file and passing instructions to a local AI CLI tool."""
     import tempfile
     import subprocess
     import re
@@ -117,15 +133,31 @@ def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_
         json.dump(segments, f, ensure_ascii=False, indent=2)
         temp_input = f.name
         
+    is_same_lang = (source_lang == target_lang)
+    
+    if is_same_lang:
+        system_role = "You are an expert transcript editor."
+        task_instruction = (
+            f"Read the file '{temp_input}'. It contains a JSON array of subtitle segments in {source_lang}. "
+            f"Your task is to CLEAN UP the 'text' field of every segment. "
+            f"Fix spelling/grammar mistakes and remove repetitive hallucinations (e.g., endless repeating nonsense) caused by background noise. "
+            f"DO NOT translate to another language. Keep it in {source_lang}."
+        )
+        action_msg = f"🤖 [cyan]Invoking {cli_name} for AI clean-up pass... This may take a moment.[/cyan]"
+    else:
+        system_role = "You are an expert translator and transcript editor."
+        task_instruction = (
+            f"Read the file '{temp_input}'. It contains a JSON array of subtitle segments. "
+            f"Translate the 'text' field of every segment from {source_lang} to {target_lang}. "
+            f"IMPORTANT: While translating, also act as a clean-up editor. If you see repetitive hallucinations "
+            f"(e.g., endless repeating nonsense) caused by background noise, silently remove the gibberish."
+        )
+        action_msg = f"🤖 [cyan]Invoking {cli_name} to translate/clean-up... This may take a moment.[/cyan]"
+
     prompt = (
-        f"You are an expert translator. Read the file '{temp_input}'. "
-        f"It contains a JSON array of subtitle segments. "
-        f"Translate the 'text' field of every segment from {source_lang} to {target_lang}. "
+        f"{system_role} {task_instruction} "
         f"Do NOT change the 'start' or 'end' timestamps. "
-        f"IMPORTANT: While translating, also act as a clean-up editor. If you see repetitive hallucinations "
-        f"(e.g., 'WorkingWorkingWorking' or endless repeating nonsense) caused by background noise, "
-        f"silently remove the gibberish. "
-        f"DO NOT write to a file! Output ONLY the completely translated valid JSON array directly to standard output. "
+        f"DO NOT write to a file! Output ONLY the completely processed valid JSON array directly to standard output. "
         f"Do not include conversational text or markdown wrappers."
     )
     
@@ -142,7 +174,7 @@ def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_
         # Default fallback for goose, agent, gemini CLI
         cmd = [cli_command, prompt]
         
-    console.print(f"🤖 [cyan]Invoking {cli_name} to translate/clean-up... This may take a moment.[/cyan]")
+    console.print(action_msg)
     
     try:
         # Run the tool and capture its standard output directly
@@ -195,7 +227,9 @@ def translate_segments(segments: List[Dict[str, Any]], source_lang: str, config:
     source_lang = get_language_code(source_lang)
     
     if source_lang == target_lang:
-        return segments
+        # If using argos, it cannot do monolingual cleanup, so skip it
+        if getattr(config, 'translation_method', 'argos') == "argos":
+            return segments
         
     if getattr(config, 'translation_method', 'argos').startswith("cli_"):
         cli_command = config.translation_method.replace("cli_", "")

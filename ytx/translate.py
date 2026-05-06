@@ -170,7 +170,23 @@ def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_
 
     result = None
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        import threading
+        import time as _time
+        from rich.live import Live
+        from rich.text import Text
+
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        start = _time.monotonic()
+        with Live(console=console, refresh_per_second=4) as live:
+            while proc.poll() is None:
+                elapsed = int(_time.monotonic() - start)
+                mins, secs = divmod(elapsed, 60)
+                live.update(Text(f"⏳ {cli_name} thinking... {mins}m {secs:02d}s elapsed", style="cyan"))
+                _time.sleep(0.25)
+
+        stdout, stderr = proc.communicate()
+        result = subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
 
         if result.returncode != 0:
             console.print(f"⚠️ [yellow]{cli_name} exited with error (rc={result.returncode}):[/yellow]\n{result.stderr[:500]}")
@@ -200,8 +216,6 @@ def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_
 
         return json.loads(content.strip())
 
-    except subprocess.TimeoutExpired:
-        console.print(f"⚠️ [bold red]{cli_name} timed out after 300s.[/bold red]")
     except json.JSONDecodeError as e:
         console.print(f"⚠️ [bold red]Failed to parse {cli_name} output as JSON:[/bold red] {e}")
         if result:

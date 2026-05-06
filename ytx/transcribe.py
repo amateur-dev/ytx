@@ -63,11 +63,14 @@ def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[
         decode_options["language"] = config.source_lang
         
     original_stderr = sys.stderr
+    original_stdout = sys.stdout
     if not config.verbose:
-        sys.stderr = open(os.devnull, 'w')
-        
+        _devnull = open(os.devnull, 'w')
+        sys.stderr = _devnull
+        sys.stdout = _devnull
+
     try:
-        # We use a simple spinner here since mlx_whisper.transcribe is currently blocking
+        # Suppress stdout+stderr so mlx_whisper's internal tqdm doesn't collide with the rich spinner
         with console.status(f"[cyan]Transcribing audio using Mac GPU... (Incredibly fast!)[/cyan]", spinner="dots"):
             result = mlx_whisper.transcribe(
                 audio_path,
@@ -77,8 +80,9 @@ def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[
             )
     finally:
         if not config.verbose:
-            sys.stderr.close()
+            _devnull.close()
             sys.stderr = original_stderr
+            sys.stdout = original_stdout
             
     detected_lang = result.get("language", config.source_lang or "en")
     lang_name = get_language_name(detected_lang)

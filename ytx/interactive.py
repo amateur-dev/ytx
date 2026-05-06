@@ -1,5 +1,6 @@
 import os
 import shutil
+import webbrowser
 import questionary
 from dotenv import load_dotenv, set_key
 from typing import Optional, List
@@ -170,10 +171,20 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
             gateway = questionary.select("Which gateway?", choices=["OpenRouter", "OpenAI", "Anthropic", "Gemini"]).ask()
             if gateway:
                 if gateway == "OpenRouter":
-                    print("💡 Tip: You can get a free API key instantly at https://openrouter.ai/keys")
+                    print("🌐 Opening browser to generate your OpenRouter key...")
+                    try:
+                        webbrowser.open("https://openrouter.ai/keys")
+                    except Exception:
+                        print("💡 Tip: You can get a free API key instantly at https://openrouter.ai/keys")
+                
                 key_name = f"{gateway.upper()}_API_KEY"
                 key_val = questionary.password(f"Please paste your {gateway} API key:").ask()
+                
                 if key_val:
+                    # Basic validation - OpenRouter keys typically start with sk-or-v1-
+                    if gateway == "OpenRouter" and not key_val.startswith("sk-or-v1-"):
+                        print("⚠️ Warning: This doesn't look like a standard OpenRouter key, but I'll save it anyway.")
+                        
                     save_api_key(key_name, key_val)
                     print(f"✅ Saved {gateway} API Key to {ENV_FILE_PATH}")
 

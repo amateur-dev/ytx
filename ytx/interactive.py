@@ -234,7 +234,7 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
     has_keys = has_cloud_api_key()
     
     translation_choices = [
-        questionary.Choice("No, keep the transcript as-is", value="no"),
+        questionary.Choice("🛑 Do not translate (Keep original detected language)", value="no"),
         questionary.Choice("Yes, translate using local offline AI (Argos - basic quality)", value="argos"),
     ]
     
@@ -248,7 +248,7 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
     )
 
     translate_choice = questionary.select(
-        "Do you want to process the text further?",
+        "Do you want to translate the transcript?",
         choices=translation_choices
     ).ask()
     
@@ -256,9 +256,10 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
         exit(1)
 
     if translate_choice != "no":
-        target = questionary.text("What is the target language? (e.g., English, Spanish, French)").ask()
+        target = questionary.text("What is the target language? (e.g., Spanish, French, Hinglish) [Default: English]").ask()
         if not target:
-            exit(1)
+            target = "English" # Default to English if they just press Enter
+            
         config.target_lang = target
         config.translation_method = translate_choice
 

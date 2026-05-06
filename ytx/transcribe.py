@@ -43,13 +43,13 @@ def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[
     """Transcribe using Apple Silicon MLX GPU acceleration."""
     # MLX uses specific repo IDs for models
     repo_map = {
-        "tiny": "mlx-community/whisper-tiny",
-        "base": "mlx-community/whisper-base",
-        "small": "mlx-community/whisper-small",
-        "medium": "mlx-community/whisper-medium",
-        "large-v3": "mlx-community/whisper-large-v3"
+        "tiny": "mlx-community/whisper-tiny-mlx",
+        "base": "mlx-community/whisper-base-mlx",
+        "small": "mlx-community/whisper-small-mlx",
+        "medium": "mlx-community/whisper-medium-mlx",
+        "large-v3": "mlx-community/whisper-large-v3-mlx"
     }
-    repo_id = repo_map.get(config.model_size, "mlx-community/whisper-small")
+    repo_id = repo_map.get(config.model_size, "mlx-community/whisper-small-mlx")
     
     console.print(f"⚡ [bold yellow]Using Apple Silicon MLX GPU acceleration![/bold yellow]")
     
@@ -61,7 +61,9 @@ def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[
     
     console.print(f"🧠 [dim]Loading model into Mac GPU memory...[/dim]")
     
-    decode_options = {}
+    decode_options = {
+        "condition_on_previous_text": False
+    }
     if config.source_lang:
         decode_options["language"] = config.source_lang
         
@@ -130,7 +132,9 @@ def transcribe_audio_faster_whisper(audio_path: str, config: YtxConfig) -> Tuple
         audio_path,
         beam_size=5,
         language=config.source_lang,
-        condition_on_previous_text=False
+        condition_on_previous_text=False,
+        vad_filter=True, # Explicitly enable Voice Activity Detection
+        vad_parameters=dict(min_silence_duration_ms=500) # Skip silences over 500ms
     )
     
     detected_lang = info.language

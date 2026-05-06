@@ -4,17 +4,16 @@ from typing import List, Dict, Any
 from ytx.config import YtxConfig
 
 def get_language_code(language_name: str) -> str:
-    """Convert a language name like 'Spanish' or 'ES' to a 2-letter language code."""
+    """Convert a language name like 'Spanish', 'Eng', or 'ES' to a 2-letter language code."""
     language_name = language_name.strip()
     
-    # Check if they already provided a 2-letter code
     if len(language_name) == 2:
         return language_name.lower()
         
     try:
-        # e.g., 'Spanish' -> 'es'
-        lang = pycountry.languages.get(name=language_name.title())
-        if lang and hasattr(lang, 'alpha_2'):
+        # lookup() is much smarter than get() - it fuzzy matches "Eng", "English", etc.
+        lang = pycountry.languages.lookup(language_name)
+        if hasattr(lang, 'alpha_2'):
             return lang.alpha_2
     except Exception:
         pass

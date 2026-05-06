@@ -105,15 +105,11 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
     if initial_url:
         urls.append(initial_url)
     else:
-        while True:
-            prompt_str = "🔗 Paste another YouTube URL (or press Enter to continue):" if urls else "🔗 What YouTube video do you want to process? (Paste URL):"
-            u = questionary.text(prompt_str).ask()
-            if not u:
-                if not urls:
-                    console.print("\n[bold red]Cancelled.[/bold red]")
-                    exit(1)
-                break
-            urls.append(u)
+        u = questionary.text("🔗 What YouTube video do you want to process? (Paste URL):").ask()
+        if not u:
+            console.print("\n[bold red]Cancelled.[/bold red]")
+            exit(1)
+        urls.append(u)
 
     # 1.5 Load Preset Profile
     config = YtxConfig(urls=urls, interactive=True)
@@ -297,9 +293,15 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
         exit(1)
 
     if translate_choice != "no":
-        target = questionary.text("What is the target language? (e.g., Spanish, French, Hinglish) [Default: English]").ask()
+        target = questionary.autocomplete(
+            "What is the target language? (Arrow keys to select or type to search) [Default: English]",
+            choices=["English", "Spanish", "French", "Hinglish", "German", "Italian", "Portuguese", "Hindi", "Japanese", "Korean", "Chinese"],
+            default="English",
+            ignore_case=True
+        ).ask()
+        
         if not target:
-            target = "English" # Default to English if they just press Enter
+            target = "English" # Default to English if they just press Enter or clear it
             
         config.target_lang = target
         config.translation_method = translate_choice
@@ -320,13 +322,15 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
         
     # Save Preset
     try:
-        with open(PROFILE_FILE_PATH, 'w') as f:
-            json.dump({
-                "model_size": config.model_size,
-                "translation_method": getattr(config, 'translation_method', 'no'),
-                "target_lang": getattr(config, 'target_lang', 'None'),
-                "output_format": config.output_format
-            }, f)
+        save_preset = questionary.confirm("Would you like to save these settings as your default preset?", default=True).ask()
+        if save_preset:
+            with open(PROFILE_FILE_PATH, 'w') as f:
+                json.dump({
+                    "model_size": config.model_size,
+                    "translation_method": getattr(config, 'translation_method', 'no'),
+                    "target_lang": getattr(config, 'target_lang', 'None'),
+                    "output_format": config.output_format
+                }, f)
     except Exception:
         pass
     

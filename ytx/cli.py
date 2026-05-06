@@ -132,8 +132,6 @@ def main():
         sys.exit(run_doctor())
 
     # Detect if we should run in interactive mode
-    # We run interactive if no extra flags are provided.
-    # Flags we care about that would indicate a 'headless' run:
     headless_flags_used = any([
         args.input,
         args.official_only,
@@ -187,14 +185,37 @@ def main():
             verbose=args.verbose
         )
 
+    import time
+    start_time = time.time()
+    success_count = 0
+
     for url in config.urls:
         try:
             process_url(url, config)
+            success_count += 1
         except Exception as e:
             print(f"Error processing {url}: {e}", file=sys.stderr)
             if config.verbose:
                 import traceback
                 traceback.print_exc()
+                
+    elapsed = time.time() - start_time
+    mins, secs = divmod(int(elapsed), 60)
+    
+    from rich.console import Console
+    from rich.panel import Panel
+    console = Console()
+    
+    summary = f"[bold green]Successfully processed {success_count}/{len(config.urls)} video(s)[/bold green]\n"
+    summary += f"[dim]Total time: {mins}m {secs}s[/dim]\n"
+    summary += f"[dim]Output folder: {os.path.abspath(config.output_dir)}[/dim]"
+    
+    console.print()
+    console.print(Panel.fit(summary, title="[bold cyan]🎉 Finished[/bold cyan]", border_style="green"))
+    
+    # Auto-open output folder on macOS
+    if sys.platform == "darwin" and success_count > 0:
+        os.system(f"open '{os.path.abspath(config.output_dir)}'")
 
 if __name__ == "__main__":
     main()

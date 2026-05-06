@@ -1,4 +1,5 @@
 import os
+import json
 import shutil
 import webbrowser
 import questionary
@@ -15,6 +16,7 @@ from ytx.config import YtxConfig
 from ytx.youtube import get_video_info
 
 ENV_FILE_PATH = Path.home() / ".ytx.env"
+PROFILE_FILE_PATH = Path.home() / ".ytx_profile.json"
 console = Console()
 
 def load_env():
@@ -99,18 +101,55 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
         live.update(panel)
     
     # 1. URL Gathering
-    url = initial_url
-    if not url:
-        url = questionary.text("🔗 What YouTube video do you want to process? (Paste URL):").ask()
-        if not url:
-            console.print("\n[bold red]Cancelled.[/bold red]")
-            exit(1)
+    urls = []
+    if initial_url:
+        urls.append(initial_url)
+    else:
+        while True:
+            prompt_str = "🔗 Paste another YouTube URL (or press Enter to continue):" if urls else "🔗 What YouTube video do you want to process? (Paste URL):"
+            u = questionary.text(prompt_str).ask()
+            if not u:
+                if not urls:
+                    console.print("\n[bold red]Cancelled.[/bold red]")
+                    exit(1)
+                break
+            urls.append(u)
+
+    # 1.5 Load Preset Profile
+    config = YtxConfig(urls=urls, interactive=True)
+    
+    if PROFILE_FILE_PATH.exists():
+        try:
+            with open(PROFILE_FILE_PATH, 'r') as f:
+                profile = json.load(f)
+            
+            p_model = profile.get("model_size", "small")
+            p_trans = profile.get("translation_method", "no")
+            p_lang = profile.get("target_lang", "None")
+            p_fmt = profile.get("output_format", "srt")
+            
+            desc = f"Model: {p_model} | Translation: {p_trans} -> {p_lang} | Format: {p_fmt}"
+            use_preset = questionary.confirm(f"Found saved preset ({desc}). Use these settings?", default=True).ask()
+            
+            if use_preset:
+                config.model_size = p_model
+                config.translation_method = p_trans
+                config.target_lang = p_lang if p_trans != "no" else None
+                config.output_format = p_fmt
+                config.force_transcribe = True # Presets auto-force transcription for batch speed
+                
+                print("\n🚀 Using preset configuration. Starting pipeline...\n")
+                return config
+        except Exception:
+            pass # Silently fail on bad profile
 
     # 2. Metadata Fetching
-    console.print("\n[dim]🔍 Fetching video details... Please wait.[/dim]")
+    console.print(f"\n[dim]🔍 Fetching video details for {len(urls)} video(s)... Please wait.[/dim]")
     # Create a dummy config just for quiet extraction
-    dummy_config = YtxConfig(urls=[url], verbose=False)
-    info = get_video_info(url, dummy_config)
+    dummy_config = YtxConfig(urls=urls, verbose=False)
+    
+    # We just peek at the first URL to make subtitle decisions if it's a single video
+    info = get_video_info(urls[0], dummy_config)
     
     if not info:
         console.print("[bold red]❌ Could not fetch video info. Exiting.[/bold red]")
@@ -118,12 +157,14 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
         
     title = info.get('title', 'Unknown Video')
     duration = info.get('duration', 0)
-    console.print(f"\n🎬 [bold green]Video:[/bold green] [white]\"{title}\" ({duration}s)[/white]\n")
+    
+    if len(urls) == 1:
+        console.print(f"\n🎬 [bold green]Video:[/bold green] [white]\"{title}\" ({duration}s)[/white]\n")
+    else:
+        console.print(f"\n🎬 [bold green]Batch Mode:[/bold green] [white]{len(urls)} videos queued.[/white]\n")
 
     official_subs = info.get('subtitles', {})
     auto_subs = info.get('automatic_captions', {})
-    
-    config = YtxConfig(urls=[url], interactive=True)
     
     # 3. Subtitle / Transcription Logic
     transcribe_action = "local"
@@ -276,6 +317,18 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
     
     if not config.output_format:
         exit(1)
+        
+    # Save Preset
+    try:
+        with open(PROFILE_FILE_PATH, 'w') as f:
+            json.dump({
+                "model_size": config.model_size,
+                "translation_method": getattr(config, 'translation_method', 'no'),
+                "target_lang": getattr(config, 'target_lang', 'None'),
+                "output_format": config.output_format
+            }, f)
+    except Exception:
+        pass
     
     print("\n🚀 Configuration complete. Starting pipeline...\n")
     return config

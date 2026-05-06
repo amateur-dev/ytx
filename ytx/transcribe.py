@@ -41,21 +41,14 @@ def get_language_name(code: str) -> str:
 
 def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[str, Any]], str]:
     """Transcribe using Apple Silicon MLX GPU acceleration."""
-    # MLX uses specific repo IDs for models
-    repo_map = {
-        "tiny": "mlx-community/whisper-tiny-mlx",
-        "base": "mlx-community/whisper-base-mlx",
-        "small": "mlx-community/whisper-small-mlx",
-        "medium": "mlx-community/whisper-medium-mlx",
-        "large-v3": "mlx-community/whisper-large-v3-mlx"
-    }
-    repo_id = repo_map.get(config.model_size, "mlx-community/whisper-small-mlx")
+    # We strictly use large-v3 for maximum quality
+    repo_id = "mlx-community/whisper-large-v3-mlx"
     
     console.print(f"⚡ [bold yellow]Using Apple Silicon MLX GPU acceleration![/bold yellow]")
     
     # Pre-download the model so the user sees the progress bar instead of a frozen spinner
     if not config.verbose:
-        console.print(f"📦 [dim]Checking/downloading Whisper AI model '{config.model_size}'...[/dim]")
+        console.print(f"📦 [dim]Checking/downloading Whisper AI model 'large-v3'...[/dim]")
     from huggingface_hub import snapshot_download
     snapshot_download(repo_id=repo_id)
     
@@ -105,13 +98,16 @@ def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[
 def transcribe_audio_faster_whisper(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[str, Any]], str]:
     """Transcribe using CPU/CUDA via faster-whisper."""
     
+    # We strictly use large-v3 for maximum quality
+    model_size = "large-v3"
+    
     # Pre-download the model explicitly so the user sees the download progress bar
     if not config.verbose:
-        console.print(f"📦 [dim]Checking/downloading Whisper AI model '{config.model_size}'...[/dim]")
+        console.print(f"📦 [dim]Checking/downloading Whisper AI model 'large-v3'...[/dim]")
     from faster_whisper.utils import download_model as fw_download_model
-    fw_download_model(config.model_size)
+    fw_download_model(model_size)
     
-    console.print(f"🧠 [dim]Loading Whisper AI model '{config.model_size}' into memory...[/dim]")
+    console.print(f"🧠 [dim]Loading Whisper AI model 'large-v3' into memory...[/dim]")
     
     # Suppress ctranslate2 compute type warnings
     if not config.verbose:
@@ -123,7 +119,7 @@ def transcribe_audio_faster_whisper(audio_path: str, config: YtxConfig) -> Tuple
         
     try:
         # device="auto" defaults to CUDA if available, else CPU.
-        model = WhisperModel(config.model_size, device="auto", compute_type="default")
+        model = WhisperModel(model_size, device="auto", compute_type="default")
     finally:
         if not config.verbose:
             sys.stderr.close()

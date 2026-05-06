@@ -81,9 +81,8 @@ def translate_with_cloud(segments: List[Dict[str, Any]], source_lang: str, targe
         action_msg = f"🧹 [cyan]Running AI clean-up pass on {source_lang} transcript ({model})...[/cyan]"
     else:
         system_role = "You are a precise subtitle translator and editor. You only output valid JSON arrays without markdown wrappers."
-        hinglish_rule = " (Note: If target is Hinglish, you MUST use the English/Latin alphabet, not Devanagari script!)" if target_lang.lower() == "hinglish" else ""
         task_instruction = (
-            f"Translate the following JSON subtitle segments from {source_lang} to {target_lang}.{hinglish_rule}\n"
+            f"Translate the following JSON subtitle segments from {source_lang} to {target_lang}.\n"
             f"IMPORTANT: While translating, also act as a strict clean-up editor. If you see repetitive hallucinations "
             f"(e.g., repeating the same word infinitely, repeated syllables, or blocks of text where the exact same words repeat for 10+ seconds) caused by background noise, SILENTLY REMOVE the gibberish. Leave the text string empty if the whole segment is a hallucination."
         )
@@ -141,10 +140,9 @@ def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_
         )
         action_msg = f"🤖 [cyan]Invoking {cli_name} for AI clean-up pass... This may take a moment.[/cyan]"
     else:
-        hinglish_rule = " IMPORTANT: If target is Hinglish, you MUST use the English/Latin alphabet only, NOT Devanagari script." if target_lang.lower() == "hinglish" else ""
         task_instruction = (
             f"You are an expert subtitle translator. Below is a JSON array of subtitle segments.\n"
-            f"TASK: Translate the 'text' field of every segment from {source_lang} to {target_lang}.{hinglish_rule} "
+            f"TASK: Translate the 'text' field of every segment from {source_lang} to {target_lang}. "
             f"While translating, also silently remove any repetitive hallucinations "
             f"(e.g., repeated words/syllables for 10+ seconds) — leave 'text' empty for fully hallucinated segments.\n"
         )

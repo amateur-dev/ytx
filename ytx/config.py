@@ -10,7 +10,6 @@ class YtxConfig:
     target_lang: Optional[str] = None  # '--to'
     translation_method: str = "argos" # 'argos' or 'cloud'
     output_format: str = "srt"  # srt, vtt, txt, json
-    model_size: str = "small" # tiny, base, small, medium, large-v3
     output_dir: str = "output"
     keep_audio: bool = False
     verbose: bool = False

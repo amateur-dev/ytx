@@ -30,7 +30,6 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument("--translator", type=str, default="argos", help="Translator to use (e.g., argos, cloud, cli_opencode, cli_claude_code)")
     
     parser.add_argument("--format", choices=["srt", "vtt", "txt", "json"], default="srt", help="Choose output format")
-    parser.add_argument("--model", choices=["tiny", "base", "small", "medium", "large-v3"], default="small", help="Select faster-whisper model size")
     parser.add_argument("--output", type=str, default="output", help="Choose output directory")
     
     parser.add_argument("--keep-audio", action="store_true", help="Keep downloaded audio after transcription")
@@ -141,7 +140,6 @@ def main():
         args.source_lang,
         args.target_lang,
         args.format != "srt",
-        args.model != "small",
         args.output != "output",
         args.keep_audio,
         args.verbose,
@@ -183,7 +181,6 @@ def main():
             source_lang=args.source_lang,
             target_lang=args.target_lang,
             output_format=args.format,
-            model_size=args.model,
             output_dir=args.output,
             keep_audio=args.keep_audio,
             verbose=args.verbose,

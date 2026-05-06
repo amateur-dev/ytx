@@ -14,6 +14,7 @@ import math
 
 from ytx.config import YtxConfig
 from ytx.youtube import get_video_info
+from ytx.transcribe import HAS_MLX
 
 ENV_FILE_PATH = Path.home() / ".ytx.env"
 PROFILE_FILE_PATH = Path.home() / ".ytx_profile.json"
@@ -119,16 +120,14 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
             with open(PROFILE_FILE_PATH, 'r') as f:
                 profile = json.load(f)
             
-            p_model = profile.get("model_size", "small")
             p_trans = profile.get("translation_method", "no")
             p_lang = profile.get("target_lang", "None")
             p_fmt = profile.get("output_format", "srt")
             
-            desc = f"Model: {p_model} | Translation: {p_trans} -> {p_lang} | Format: {p_fmt}"
+            desc = f"Translation: {p_trans} -> {p_lang} | Format: {p_fmt}"
             use_preset = questionary.confirm(f"Found saved preset ({desc}). Use these settings?", default=True).ask()
             
             if use_preset:
-                config.model_size = p_model
                 config.translation_method = p_trans
                 config.target_lang = p_lang if p_trans != "no" else None
                 config.output_format = p_fmt
@@ -218,22 +217,15 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
                 
     else:
         print("ℹ️ No subtitles exist for this video. I will extract the audio and transcribe it.")
-        
-    # Transcription model selection
+
+    # We now strictly use the large-v3 model. Add the first-time caution message.
     if transcribe_action == "transcribe_local":
-        model_choices = [
-            questionary.Choice("small (Fast & good quality - Recommended)", value="small"),
-            questionary.Choice("tiny (Extremely fast, lower quality)", value="tiny"),
-            questionary.Choice("base (Fast, okay quality)", value="base"),
-            questionary.Choice("medium (Slower, higher quality)", value="medium"),
-            questionary.Choice("large-v3 (Slowest, highest quality)", value="large-v3")
-        ]
-        config.model_size = questionary.select(
-            "Which AI model size should I use for transcription?",
-            choices=model_choices
-        ).ask()
-        if not config.model_size:
-            exit(1)
+        console.print("\n[bold yellow]Notice:[/bold yellow] [white]YTX ensures maximum quality by exclusively using the state-of-the-art [bold cyan]large-v3[/bold cyan] AI model.[/white]")
+        console.print("[dim]If this is your first time using YTX, it will download the open-source model (~3GB) from Hugging Face:[/dim]")
+        if HAS_MLX:
+            console.print("[dim]Link: https://huggingface.co/mlx-community/whisper-large-v3-mlx[/dim]\n")
+        else:
+            console.print("[dim]Link: https://huggingface.co/Systran/faster-whisper-large-v3[/dim]\n")
 
     # 4. API Key / Gateway / Local CLI configuration Check
     local_tools = detect_local_ai_tools()
@@ -295,7 +287,7 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
     if translate_choice != "no":
         target = questionary.autocomplete(
             "What is the target language? (Arrow keys to select or type to search) [Default: English]",
-            choices=["English", "Spanish", "French", "Hinglish", "German", "Italian", "Portuguese", "Hindi", "Japanese", "Korean", "Chinese"],
+            choices=["English", "Spanish", "French", "German", "Italian", "Portuguese", "Hindi", "Japanese", "Korean", "Chinese"],
             default="English",
             ignore_case=True
         ).ask()
@@ -326,7 +318,6 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
         if save_preset:
             with open(PROFILE_FILE_PATH, 'w') as f:
                 json.dump({
-                    "model_size": config.model_size,
                     "translation_method": getattr(config, 'translation_method', 'no'),
                     "target_lang": getattr(config, 'target_lang', 'None'),
                     "output_format": config.output_format

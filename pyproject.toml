@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ytx"
+version = "0.1.0"
+description = "Local-first command-line tool for YouTube transcripts and translation"
+authors = [
+    { name = "Developer" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "yt-dlp",
+    "faster-whisper",
+    "argostranslate"
+]
+
+[tool.setuptools.packages.find]
+include = ["ytx", "ytx.*"]
+
+[project.scripts]
+ytx = "ytx.cli:main"

@@ -125,14 +125,16 @@ def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_
     )
     
     # Construct the command
-    if cli_command == "claude":
+    if cli_command == "claude" or cli_command == "claude_code":
         cmd = ["claude", "-p", prompt]
+    elif cli_command == "opencode":
+        # OpenCode uses 'run' for a non-interactive, single prompt execution
+        cmd = ["opencode", "run", prompt]
     elif cli_command == "ollama":
         # Assumes llama3 is installed; if not, ollama will pull or fail. 
-        # Better to just use a standard prompt model execution.
         cmd = ["ollama", "run", "llama3", prompt] 
     else:
-        # Default for opencode, goose, agent, gemini
+        # Default fallback for goose, agent, gemini CLI
         cmd = [cli_command, prompt]
         
     console.print(f"🤖 [cyan]Invoking {cli_name} to translate... This may take a moment.[/cyan]")

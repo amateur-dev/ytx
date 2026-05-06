@@ -72,6 +72,9 @@ def translate_with_cloud(segments: List[Dict[str, Any]], source_lang: str, targe
     prompt = (
         f"Translate the following JSON subtitle segments from {source_lang} to {target_lang}.\n"
         f"Maintain the exact JSON structure. Do NOT change the 'start' or 'end' timestamps.\n"
+        f"IMPORTANT: While translating, also act as a clean-up editor. If you see repetitive hallucinations "
+        f"(e.g., repeating the same word infinitely like 'WorkingWorkingWorking') caused by background noise, "
+        f"silently remove the gibberish and output clean, readable text.\n"
         f"Output ONLY valid JSON. Do not include markdown formatting like ```json.\n\n"
         f"{json.dumps(segments, ensure_ascii=False)}"
     )
@@ -108,20 +111,22 @@ def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_
     """Translate segments by writing them to a temp file and passing instructions to a local AI CLI tool."""
     import tempfile
     import subprocess
+    import re
     
     with tempfile.NamedTemporaryFile('w', delete=False, suffix='.json') as f:
         json.dump(segments, f, ensure_ascii=False, indent=2)
         temp_input = f.name
         
-    temp_output = temp_input.replace('.json', '_translated.json')
-    
     prompt = (
         f"You are an expert translator. Read the file '{temp_input}'. "
         f"It contains a JSON array of subtitle segments. "
         f"Translate the 'text' field of every segment from {source_lang} to {target_lang}. "
         f"Do NOT change the 'start' or 'end' timestamps. "
-        f"Save the completely translated JSON array to a new file named '{temp_output}'. "
-        f"Ensure the output is valid JSON. Do not output conversational text."
+        f"IMPORTANT: While translating, also act as a clean-up editor. If you see repetitive hallucinations "
+        f"(e.g., 'WorkingWorkingWorking' or endless repeating nonsense) caused by background noise, "
+        f"silently remove the gibberish. "
+        f"DO NOT write to a file! Output ONLY the completely translated valid JSON array directly to standard output. "
+        f"Do not include conversational text or markdown wrappers."
     )
     
     # Construct the command
@@ -137,25 +142,44 @@ def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_
         # Default fallback for goose, agent, gemini CLI
         cmd = [cli_command, prompt]
         
-    console.print(f"🤖 [cyan]Invoking {cli_name} to translate... This may take a moment.[/cyan]")
+    console.print(f"🤖 [cyan]Invoking {cli_name} to translate/clean-up... This may take a moment.[/cyan]")
     
     try:
-        # Run the tool and suppress its standard output so it doesn't clutter our terminal
-        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Run the tool and capture its standard output directly
+        result = subprocess.run(cmd, capture_output=True, text=True)
         
-        if os.path.exists(temp_output):
-            with open(temp_output, 'r') as f:
-                translated_segments = json.load(f)
-            return translated_segments
-        else:
-            console.print(f"⚠️ [yellow]{cli_name} failed to create the output file '{temp_output}'.[/yellow]")
+        if result.returncode != 0:
+            console.print(f"⚠️ [yellow]{cli_name} returned an error: {result.stderr}[/yellow]")
+            return None
+            
+        content = result.stdout.strip()
+        
+        # Clean up markdown if the AI disobeyed
+        if content.startswith("```json"):
+            content = content[7:]
+        elif content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
+            
+        # Try to find the JSON array boundary just in case it printed conversational text anyway
+        start_idx = content.find("[")
+        end_idx = content.rfind("]")
+        if start_idx != -1 and end_idx != -1:
+            content = content[start_idx:end_idx+1]
+            
+        translated_segments = json.loads(content.strip())
+        return translated_segments
+        
+    except json.JSONDecodeError as e:
+        console.print(f"⚠️ [bold red]Failed to parse {cli_name} output as JSON:[/bold red] {e}")
+        if config.verbose:
+            print("Raw Output:", result.stdout)
     except Exception as e:
         console.print(f"⚠️ [bold red]CLI execution failed:[/bold red] {e}")
     finally:
         if os.path.exists(temp_input):
             os.remove(temp_input)
-        if os.path.exists(temp_output):
-            os.remove(temp_output)
             
     return None
 

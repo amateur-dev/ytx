@@ -17,7 +17,8 @@ dependencies = [
     "questionary",
     "python-dotenv",
     "tqdm",
-    "pycountry"
+    "pycountry",
+    "mlx-whisper; sys_platform == 'darwin' and platform_machine == 'arm64'"
 ]
 
 [tool.setuptools.packages.find]

@@ -87,6 +87,7 @@ def process_url(url: str, config: YtxConfig) -> None:
         
         # Download Audio
         audio_base = os.path.join(out_dir, "audio")
+        print(f"📥 Downloading audio track...")
         audio_path = download_audio(url, audio_base, config)
         
         if not audio_path:

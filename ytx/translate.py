@@ -1,6 +1,25 @@
 import os
+import pycountry
 from typing import List, Dict, Any
 from ytx.config import YtxConfig
+
+def get_language_code(language_name: str) -> str:
+    """Convert a language name like 'Spanish' or 'ES' to a 2-letter language code."""
+    language_name = language_name.strip()
+    
+    # Check if they already provided a 2-letter code
+    if len(language_name) == 2:
+        return language_name.lower()
+        
+    try:
+        # e.g., 'Spanish' -> 'es'
+        lang = pycountry.languages.get(name=language_name.title())
+        if lang and hasattr(lang, 'alpha_2'):
+            return lang.alpha_2
+    except Exception:
+        pass
+        
+    return language_name.lower()  # Fallback
 
 def _install_argos_package(from_code: str, to_code: str) -> bool:
     import argostranslate.package
@@ -27,8 +46,13 @@ def translate_segments(segments: List[Dict[str, Any]], source_lang: str, config:
     Translates a list of transcript segments to the target language.
     Returns the translated segments.
     """
-    target_lang = config.target_lang
-    if not target_lang or source_lang == target_lang:
+    if not config.target_lang:
+        return segments
+        
+    target_lang = get_language_code(config.target_lang)
+    source_lang = get_language_code(source_lang)
+    
+    if source_lang == target_lang:
         return segments
         
     if getattr(config, 'translation_method', 'argos').startswith("cli_"):

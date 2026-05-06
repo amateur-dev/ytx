@@ -45,6 +45,7 @@ def download_subtitles(url: str, lang: str, is_auto: bool, output_path_base: str
     # yt-dlp tends to add the language code to the file name, e.g., output.en.srt
     ydl_opts = {
         'quiet': not config.verbose,
+        'no_warnings': not config.verbose,
         'skip_download': True,
         'writesubtitles': not is_auto,
         'writeautomaticsub': is_auto,

@@ -7,13 +7,19 @@ def get_video_info(url: str, config: YtxConfig) -> Dict[str, Any]:
     """Fetch video metadata and subtitle information using yt-dlp."""
     ydl_opts = {
         'quiet': not config.verbose,
+        'no_warnings': not config.verbose,
         'extract_flat': False, # Need full metadata for subs
         'skip_download': True,
     }
     
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
-        return info
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            return info
+    except Exception as e:
+        if config.verbose:
+            print(f"Exception during metadata extraction: {e}")
+        return {}
 
 def download_audio(url: str, output_path_base: str, config: YtxConfig) -> Optional[str]:
     """Download audio using yt-dlp and ffmpeg to a specific base path.
@@ -22,6 +28,7 @@ def download_audio(url: str, output_path_base: str, config: YtxConfig) -> Option
     ydl_opts = {
         'format': 'bestaudio/best',
         'quiet': not config.verbose,
+        'no_warnings': not config.verbose,
         'outtmpl': f"{output_path_base}.%(ext)s",
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',

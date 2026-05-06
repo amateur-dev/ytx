@@ -15,7 +15,9 @@ dependencies = [
     "faster-whisper",
     "argostranslate",
     "questionary",
-    "python-dotenv"
+    "python-dotenv",
+    "tqdm",
+    "pycountry"
 ]
 
 [tool.setuptools.packages.find]

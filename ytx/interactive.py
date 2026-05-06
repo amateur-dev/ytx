@@ -161,32 +161,31 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
     if not has_cloud_api_key():
         if not local_tools:
             prompt_msg = "🔑 I see that you do not have Claude Code, OpenCode, Ollama, or Gemini CLI installed.\n   Do you have an API Key that I could use? (I can help you configure an OpenRouter Free API key instantly!)"
+            setup_api = questionary.confirm(prompt_msg, default=False).ask()
+            
+            if setup_api:
+                gateway = questionary.select("Which gateway?", choices=["OpenRouter", "OpenAI", "Anthropic", "Gemini"]).ask()
+                if gateway:
+                    if gateway == "OpenRouter":
+                        print("🌐 Opening browser to generate your OpenRouter key...")
+                        try:
+                            webbrowser.open("https://openrouter.ai/keys")
+                        except Exception:
+                            print("💡 Tip: You can get a free API key instantly at https://openrouter.ai/keys")
+                    
+                    key_name = f"{gateway.upper()}_API_KEY"
+                    key_val = questionary.password(f"Please paste your {gateway} API key:").ask()
+                    
+                    if key_val:
+                        # Basic validation - OpenRouter keys typically start with sk-or-v1-
+                        if gateway == "OpenRouter" and not key_val.startswith("sk-or-v1-"):
+                            print("⚠️ Warning: This doesn't look like a standard OpenRouter key, but I'll save it anyway.")
+                            
+                        save_api_key(key_name, key_val)
+                        print(f"✅ Saved {gateway} API Key to {ENV_FILE_PATH}")
         else:
             tools_str = ", ".join(local_tools)
-            prompt_msg = f"🔑 I see you have {tools_str} installed! I can use them to power my AI features.\n   Would you also like to configure a Cloud API Key (like OpenRouter) for fallback or advanced translation/summaries?"
-            
-        setup_api = questionary.confirm(prompt_msg, default=False).ask()
-        
-        if setup_api:
-            gateway = questionary.select("Which gateway?", choices=["OpenRouter", "OpenAI", "Anthropic", "Gemini"]).ask()
-            if gateway:
-                if gateway == "OpenRouter":
-                    print("🌐 Opening browser to generate your OpenRouter key...")
-                    try:
-                        webbrowser.open("https://openrouter.ai/keys")
-                    except Exception:
-                        print("💡 Tip: You can get a free API key instantly at https://openrouter.ai/keys")
-                
-                key_name = f"{gateway.upper()}_API_KEY"
-                key_val = questionary.password(f"Please paste your {gateway} API key:").ask()
-                
-                if key_val:
-                    # Basic validation - OpenRouter keys typically start with sk-or-v1-
-                    if gateway == "OpenRouter" and not key_val.startswith("sk-or-v1-"):
-                        print("⚠️ Warning: This doesn't look like a standard OpenRouter key, but I'll save it anyway.")
-                        
-                    save_api_key(key_name, key_val)
-                    print(f"✅ Saved {gateway} API Key to {ENV_FILE_PATH}")
+            print(f"✨ Detected installed AI tools: {tools_str}. I can use them to power advanced AI features!")
 
     # 5. Translation options
     has_keys = has_cloud_api_key()
@@ -214,7 +213,7 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
         exit(1)
 
     if translate_choice != "no":
-        target = questionary.text("What is the target language code? (e.g., 'en', 'es', 'fr')").ask()
+        target = questionary.text("What is the target language? (e.g., English, Spanish, French)").ask()
         if not target:
             exit(1)
         config.target_lang = target
@@ -223,7 +222,12 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
     # 6. Format options
     config.output_format = questionary.select(
         "What format do you need?",
-        choices=["srt", "txt", "vtt", "json"]
+        choices=[
+            questionary.Choice("SRT (Recommended for video players/YouTube)", value="srt"),
+            questionary.Choice("TXT (Plain text for reading)", value="txt"),
+            questionary.Choice("VTT (For web video players)", value="vtt"),
+            questionary.Choice("JSON (For developers/API)", value="json")
+        ]
     ).ask()
     
     if not config.output_format:

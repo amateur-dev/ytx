@@ -18,6 +18,7 @@ dependencies = [
     "python-dotenv",
     "rich",
     "pycountry",
+    "litellm",
     "mlx-whisper; sys_platform == 'darwin' and platform_machine == 'arm64'"
 ]
 

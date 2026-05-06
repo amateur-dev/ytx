@@ -31,9 +31,13 @@ def translate_segments(segments: List[Dict[str, Any]], source_lang: str, config:
     if not target_lang or source_lang == target_lang:
         return segments
         
-    if getattr(config, 'translation_method', 'argos') == "cloud":
+    if getattr(config, 'translation_method', 'argos').startswith("cli_"):
+        cli_name = config.translation_method.replace("cli_", "").replace("_", " ").title()
+        print(f"✨ Routing translation to local {cli_name} CLI is planned for a future update!")
+        print("Falling back to local offline argos translation for now...")
+    elif getattr(config, 'translation_method', 'argos') == "cloud":
         print(f"✨ Cloud AI translation to '{target_lang}' is planned for a future update!")
-        print("Falling back to local offline translation for now...")
+        print("Falling back to local offline argos translation for now...")
 
     try:
         import argostranslate.package

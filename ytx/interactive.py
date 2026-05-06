@@ -1,4 +1,5 @@
 import os
+import shutil
 import questionary
 from dotenv import load_dotenv, set_key
 from typing import Optional, List
@@ -27,6 +28,27 @@ def has_cloud_api_key() -> bool:
         "GEMINI_API_KEY", 
         "OPENROUTER_API_KEY"
     ])
+
+def detect_local_ai_tools() -> List[str]:
+    """Detect installed AI CLI tools on the user's system by checking the PATH."""
+    tools = []
+    
+    # Tool Name -> CLI command to check
+    known_clis = {
+        "Claude Code": "claude",
+        "OpenCode": "opencode",
+        "Ollama": "ollama",
+        "Gemini CLI": "gemini",
+        "Cursor Agent": "agent",
+        "Goose": "goose",
+        "Aion CLI": "aion"
+    }
+    
+    for name, cmd in known_clis.items():
+        if shutil.which(cmd):
+            tools.append(name)
+            
+    return tools
 
 def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
     """Run an interactive Q&A session using questionary to build the config."""
@@ -132,30 +154,49 @@ def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
         if not config.model_size:
             exit(1)
 
-    # 4. API Key / Gateway configuration Check
+    # 4. API Key / Gateway / Local CLI configuration Check
+    local_tools = detect_local_ai_tools()
+    
     if not has_cloud_api_key():
-        setup_api = questionary.confirm(
-            "🔑 I don't see any Cloud API keys configured. Would you like to add one (e.g., OpenRouter) to unlock Cloud AI translation/summaries?",
-            default=False
-        ).ask()
+        if not local_tools:
+            prompt_msg = "🔑 I see that you do not have Claude Code, OpenCode, Ollama, or Gemini CLI installed.\n   Do you have an API Key that I could use? (I can help you configure an OpenRouter Free API key instantly!)"
+        else:
+            tools_str = ", ".join(local_tools)
+            prompt_msg = f"🔑 I see you have {tools_str} installed! I can use them to power my AI features.\n   Would you also like to configure a Cloud API Key (like OpenRouter) for fallback or advanced translation/summaries?"
+            
+        setup_api = questionary.confirm(prompt_msg, default=False).ask()
         
         if setup_api:
             gateway = questionary.select("Which gateway?", choices=["OpenRouter", "OpenAI", "Anthropic", "Gemini"]).ask()
             if gateway:
+                if gateway == "OpenRouter":
+                    print("💡 Tip: You can get a free API key instantly at https://openrouter.ai/keys")
                 key_name = f"{gateway.upper()}_API_KEY"
                 key_val = questionary.password(f"Please paste your {gateway} API key:").ask()
                 if key_val:
                     save_api_key(key_name, key_val)
-                    print(f"✅ Saved to {ENV_FILE_PATH}")
+                    print(f"✅ Saved {gateway} API Key to {ENV_FILE_PATH}")
 
     # 5. Translation options
+    has_keys = has_cloud_api_key()
+    
+    translation_choices = [
+        questionary.Choice("No, keep the transcript as-is", value="no"),
+        questionary.Choice("Yes, translate using local offline AI (Argos - basic quality)", value="argos"),
+    ]
+    
+    for tool in local_tools:
+        translation_choices.append(
+            questionary.Choice(f"✨ Yes, translate using your installed {tool}", value=f"cli_{tool.lower().replace(' ', '_')}")
+        )
+        
+    translation_choices.append(
+        questionary.Choice("✨ Yes, translate using Cloud API", value="cloud", disabled="No API key configured" if not has_keys else None)
+    )
+
     translate_choice = questionary.select(
         "Do you want to process the text further?",
-        choices=[
-            questionary.Choice("No, keep the transcript as-is", value="no"),
-            questionary.Choice("Yes, translate using local offline AI (Argos)", value="argos"),
-            questionary.Choice("✨ Yes, translate using Cloud AI (Requires API key)", value="cloud", disabled="No API key found" if not has_cloud_api_key() else None)
-        ]
+        choices=translation_choices
     ).ask()
     
     if not translate_choice:

@@ -1,11 +1,11 @@
 import argparse
 import sys
 import os
-import shutil
 from typing import List, Optional
 
 from ytx.config import YtxConfig
 from ytx.doctor import run_doctor
+from ytx.interactive import run_interactive_session
 from ytx.youtube import get_video_info, download_audio
 from ytx.subtitles import has_usable_subtitles, download_subtitles
 from ytx.transcribe import transcribe_audio
@@ -52,7 +52,7 @@ def process_url(url: str, config: YtxConfig) -> None:
     # Check for subtitles
     has_subs, sub_lang, is_auto = has_usable_subtitles(info, config)
     
-    if has_subs:
+    if has_subs and not config.force_transcribe:
         sub_type = "auto-generated" if is_auto else "official"
         print(f"Found {sub_type} subtitles in '{sub_lang}'.")
         
@@ -129,33 +129,62 @@ def main():
     urls = list(args.url)
     if urls and urls[0] == "doctor":
         sys.exit(run_doctor())
-    if args.input:
+
+    # Detect if we should run in interactive mode
+    # We run interactive if no extra flags are provided.
+    # Flags we care about that would indicate a 'headless' run:
+    headless_flags_used = any([
+        args.input,
+        args.official_only,
+        args.allow_auto_subs,
+        args.source_lang,
+        args.target_lang,
+        args.format != "srt",
+        args.model != "small",
+        args.output != "output",
+        args.keep_audio,
+        args.verbose
+    ])
+
+    config = None
+
+    if not headless_flags_used and len(urls) <= 1:
+        # Run interactive mode
+        initial_url = urls[0] if urls else None
         try:
-            with open(args.input, "r") as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith("#"):
-                        urls.append(line)
-        except Exception as e:
-            print(f"Error reading input file {args.input}: {e}", file=sys.stderr)
+            config = run_interactive_session(initial_url)
+        except KeyboardInterrupt:
+            print("\nCancelled.")
+            sys.exit(1)
+    else:
+        # Run headless mode
+        if args.input:
+            try:
+                with open(args.input, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#"):
+                            urls.append(line)
+            except Exception as e:
+                print(f"Error reading input file {args.input}: {e}", file=sys.stderr)
+                sys.exit(1)
+
+        if not urls:
+            print("Error: No URLs provided. Please provide URLs directly or via --input.", file=sys.stderr)
             sys.exit(1)
 
-    if not urls:
-        print("Error: No URLs provided. Please provide URLs directly or via --input.", file=sys.stderr)
-        sys.exit(1)
-
-    config = YtxConfig(
-        urls=urls,
-        official_only=args.official_only,
-        allow_auto_subs=args.allow_auto_subs,
-        source_lang=args.source_lang,
-        target_lang=args.target_lang,
-        output_format=args.format,
-        model_size=args.model,
-        output_dir=args.output,
-        keep_audio=args.keep_audio,
-        verbose=args.verbose
-    )
+        config = YtxConfig(
+            urls=urls,
+            official_only=args.official_only,
+            allow_auto_subs=args.allow_auto_subs,
+            source_lang=args.source_lang,
+            target_lang=args.target_lang,
+            output_format=args.format,
+            model_size=args.model,
+            output_dir=args.output,
+            keep_audio=args.keep_audio,
+            verbose=args.verbose
+        )
 
     for url in config.urls:
         try:

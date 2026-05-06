@@ -4,8 +4,11 @@ import platform
 import logging
 from typing import List, Dict, Any, Tuple
 from ytx.config import YtxConfig
-from tqdm import tqdm
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn, TimeRemainingColumn
+from rich.console import Console
 import pycountry
+
+console = Console()
 
 # Try to import mlx_whisper on Apple Silicon
 try:
@@ -48,9 +51,15 @@ def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[
     }
     repo_id = repo_map.get(config.model_size, "mlx-community/whisper-small")
     
-    print(f"⚡ Using Apple Silicon MLX GPU acceleration!")
-    print(f"📦 Loading Whisper AI model '{config.model_size}' into memory...")
-    print(f"✍️  Transcribing audio to text... (This is incredibly fast on Mac GPU!)")
+    console.print(f"⚡ [bold yellow]Using Apple Silicon MLX GPU acceleration![/bold yellow]")
+    
+    # Pre-download the model so the user sees the progress bar instead of a frozen spinner
+    if not config.verbose:
+        console.print(f"📦 [dim]Checking/downloading Whisper AI model '{config.model_size}'...[/dim]")
+    from huggingface_hub import snapshot_download
+    snapshot_download(repo_id=repo_id)
+    
+    console.print(f"🧠 [dim]Loading model into Mac GPU memory...[/dim]")
     
     decode_options = {}
     if config.source_lang:
@@ -61,13 +70,14 @@ def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[
         sys.stderr = open(os.devnull, 'w')
         
     try:
-        # MLX whisper is blocking but much faster
-        result = mlx_whisper.transcribe(
-            audio_path,
-            path_or_hf_repo=repo_id,
-            verbose=config.verbose,
-            **decode_options
-        )
+        # We use a simple spinner here since mlx_whisper.transcribe is currently blocking
+        with console.status(f"[cyan]Transcribing audio using Mac GPU... (Incredibly fast!)[/cyan]", spinner="dots"):
+            result = mlx_whisper.transcribe(
+                audio_path,
+                path_or_hf_repo=repo_id,
+                verbose=config.verbose,
+                **decode_options
+            )
     finally:
         if not config.verbose:
             sys.stderr.close()
@@ -75,7 +85,7 @@ def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[
             
     detected_lang = result.get("language", config.source_lang or "en")
     lang_name = get_language_name(detected_lang)
-    print(f"✅ Detected language: {lang_name}")
+    console.print(f"✅ [bold green]Detected language:[/bold green] {lang_name}")
     
     result_segments = []
     for segment in result.get("segments", []):
@@ -85,11 +95,19 @@ def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[
             "text": segment["text"].strip()
         })
         
+    console.print(f"✨ [bold green]Transcription complete![/bold green]")
     return result_segments, detected_lang
 
 def transcribe_audio_faster_whisper(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[str, Any]], str]:
     """Transcribe using CPU/CUDA via faster-whisper."""
-    print(f"📦 Loading Whisper AI model '{config.model_size}' into memory... (This might take a moment if downloading for the first time)")
+    
+    # Pre-download the model explicitly so the user sees the download progress bar
+    if not config.verbose:
+        console.print(f"📦 [dim]Checking/downloading Whisper AI model '{config.model_size}'...[/dim]")
+    from faster_whisper.utils import download_model as fw_download_model
+    fw_download_model(config.model_size)
+    
+    console.print(f"🧠 [dim]Loading Whisper AI model '{config.model_size}' into memory...[/dim]")
     
     # Suppress ctranslate2 compute type warnings
     if not config.verbose:
@@ -107,7 +125,7 @@ def transcribe_audio_faster_whisper(audio_path: str, config: YtxConfig) -> Tuple
             sys.stderr.close()
             sys.stderr = original_stderr
     
-    print(f"🎙️  Analyzing audio file to detect spoken language...")
+    console.print(f"🎙️  [cyan]Analyzing audio file to detect spoken language...[/cyan]")
     segments, info = model.transcribe(
         audio_path,
         beam_size=5,
@@ -117,27 +135,40 @@ def transcribe_audio_faster_whisper(audio_path: str, config: YtxConfig) -> Tuple
     
     detected_lang = info.language
     lang_name = get_language_name(detected_lang)
-    print(f"✅ Detected language: {lang_name} (Confidence: {info.language_probability:.0%})")
+    console.print(f"✅ [bold green]Detected language:[/bold green] {lang_name} (Confidence: {info.language_probability:.0%})")
     
     result_segments = []
     total_duration = info.duration
     
-    print(f"✍️  Transcribing audio to text...")
-    with tqdm(total=total_duration, unit="s", unit_scale=True, bar_format="{l_bar}{bar}| {n_fmt}s/{total_fmt}s audio processed") as pbar:
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(bar_width=None),
+        "[progress.percentage]{task.percentage:>3.0f}%",
+        "•",
+        TimeElapsedColumn(),
+        "•",
+        TimeRemainingColumn(),
+        console=console,
+        transient=True
+    ) as progress:
+        task = progress.add_task("[cyan]Transcribing audio...", total=total_duration)
+        
         for segment in segments:
             result_segments.append({
                 "start": segment.start,
                 "end": segment.end,
                 "text": segment.text.strip()
             })
-            pbar.update(segment.end - pbar.n)
+            progress.update(task, completed=segment.end)
             
             if config.verbose:
-                tqdm.write(f"[{segment.start:.2f}s -> {segment.end:.2f}s] {segment.text}")
+                console.print(f"[dim][{segment.start:.2f}s -> {segment.end:.2f}s][/dim] {segment.text}")
                 
-        if pbar.n < total_duration:
-            pbar.update(total_duration - pbar.n)
-            
+        # Ensure progress bar completes
+        progress.update(task, completed=total_duration)
+        
+    console.print(f"✨ [bold green]Transcription complete![/bold green]")
     return result_segments, detected_lang
 
 def transcribe_audio(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[str, Any]], str]:

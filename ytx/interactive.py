@@ -5,11 +5,17 @@ import questionary
 from dotenv import load_dotenv, set_key
 from typing import Optional, List
 from pathlib import Path
+from rich.console import Console
+from rich.panel import Panel
+from rich.live import Live
+import time
+import math
 
 from ytx.config import YtxConfig
 from ytx.youtube import get_video_info
 
 ENV_FILE_PATH = Path.home() / ".ytx.env"
+console = Console()
 
 def load_env():
     if ENV_FILE_PATH.exists():
@@ -53,29 +59,66 @@ def detect_local_ai_tools() -> List[str]:
 
 def run_interactive_session(initial_url: Optional[str] = None) -> YtxConfig:
     """Run an interactive Q&A session using questionary to build the config."""
-    print("🤖 Welcome to ytx Interactive Mode!\n")
+    logo_lines = [
+        r" __  __  _______  __  __ ",
+        r" \ \/ / |__   __| \ \/ / ",
+        r"  \  /     | |     \  /  ",
+        r"  / /      | |     /  \  ",
+        r" /_/       |_|    /_/\_\ "
+    ]
+    
+    with Live(refresh_per_second=30, console=console) as live:
+        revealed = []
+        # Smooth reveal down
+        for line in logo_lines:
+            revealed.append(line)
+            current_text = "\n".join(revealed)
+            panel = Panel.fit(f"[bold cyan]{current_text}[/bold cyan]", title="[bold yellow]ytx[/bold yellow]", subtitle="[dim]Interactive Mode[/dim]")
+            live.update(panel)
+            time.sleep(0.15)
+            
+        # Gamer RGB Gradient Sweep Effect
+        full_text = "\n".join(logo_lines)
+        
+        def get_rgb_hex(step, total_steps):
+            # Create a smooth sine wave across RGB channels to simulate an RGB keyboard wave
+            r = int((math.sin(step/total_steps * math.pi * 2) * 127) + 128)
+            g = int((math.sin(step/total_steps * math.pi * 2 + 2) * 127) + 128)
+            b = int((math.sin(step/total_steps * math.pi * 2 + 4) * 127) + 128)
+            return f"#{r:02x}{g:02x}{b:02x}"
+
+        steps = 45 # Number of frames in the color sweep
+        for i in range(steps):
+            color = get_rgb_hex(i, steps)
+            panel = Panel.fit(f"[bold {color}]{full_text}[/bold {color}]", title="[bold yellow]ytx[/bold yellow]", subtitle="[dim]Interactive Mode[/dim]")
+            live.update(panel)
+            time.sleep(0.03) # Smooth 30fps transition
+            
+        # Settle on the signature crisp cyan
+        panel = Panel.fit(f"[bold cyan]{full_text}[/bold cyan]", title="[bold yellow]ytx[/bold yellow]", subtitle="[dim]Interactive Mode[/dim]")
+        live.update(panel)
     
     # 1. URL Gathering
     url = initial_url
     if not url:
         url = questionary.text("🔗 What YouTube video do you want to process? (Paste URL):").ask()
         if not url:
-            print("\nCancelled.")
+            console.print("\n[bold red]Cancelled.[/bold red]")
             exit(1)
 
     # 2. Metadata Fetching
-    print("🔍 Fetching video details... Please wait.")
+    console.print("\n[dim]🔍 Fetching video details... Please wait.[/dim]")
     # Create a dummy config just for quiet extraction
     dummy_config = YtxConfig(urls=[url], verbose=False)
     info = get_video_info(url, dummy_config)
     
     if not info:
-        print("❌ Could not fetch video info. Exiting.")
+        console.print("[bold red]❌ Could not fetch video info. Exiting.[/bold red]")
         exit(1)
         
     title = info.get('title', 'Unknown Video')
     duration = info.get('duration', 0)
-    print(f"\n🎬 Video: \"{title}\" ({duration}s)\n")
+    console.print(f"\n🎬 [bold green]Video:[/bold green] [white]\"{title}\" ({duration}s)[/white]\n")
 
     official_subs = info.get('subtitles', {})
     auto_subs = info.get('automatic_captions', {})

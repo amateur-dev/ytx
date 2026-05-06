@@ -16,7 +16,7 @@ dependencies = [
     "argostranslate",
     "questionary",
     "python-dotenv",
-    "tqdm",
+    "rich",
     "pycountry",
     "mlx-whisper; sys_platform == 'darwin' and platform_machine == 'arm64'"
 ]

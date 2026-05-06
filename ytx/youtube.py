@@ -2,6 +2,10 @@ import os
 import yt_dlp
 from typing import Dict, Any, Optional
 from ytx.config import YtxConfig
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, DownloadColumn, TransferSpeedColumn, TimeRemainingColumn
+from rich.console import Console
+
+console = Console()
 
 def get_video_info(url: str, config: YtxConfig) -> Dict[str, Any]:
     """Fetch video metadata and subtitle information using yt-dlp."""
@@ -27,8 +31,8 @@ def download_audio(url: str, output_path_base: str, config: YtxConfig) -> Option
     """
     ydl_opts = {
         'format': 'bestaudio/best',
-        'quiet': not config.verbose,
-        'no_warnings': not config.verbose,
+        'quiet': True,
+        'no_warnings': True,
         'outtmpl': f"{output_path_base}.%(ext)s",
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
@@ -36,14 +40,64 @@ def download_audio(url: str, output_path_base: str, config: YtxConfig) -> Option
             'preferredquality': '192',
         }],
     }
+
+    if config.verbose:
+        ydl_opts['quiet'] = False
+        ydl_opts['no_warnings'] = False
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                error_code = ydl.download([url])
+                if error_code != 0:
+                    print(f"Error downloading audio for {url}")
+                    return None
+                return f"{output_path_base}.wav"
+        except Exception as e:
+            print(f"Exception during audio download: {e}")
+            return None
+
+    # For non-verbose mode, use a rich progress bar
+    progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[cyan]{task.description}"),
+        BarColumn(),
+        DownloadColumn(),
+        TransferSpeedColumn(),
+        "•",
+        TimeRemainingColumn(),
+        console=console,
+        transient=True
+    )
+    
+    task_id = None
+    
+    def my_hook(d):
+        nonlocal task_id
+        if d['status'] == 'downloading':
+            total = d.get('total_bytes') or d.get('total_bytes_estimate', 0)
+            downloaded = d.get('downloaded_bytes', 0)
+            if task_id is None:
+                task_id = progress.add_task("Downloading audio...", total=total or 100)
+            
+            if total:
+                progress.update(task_id, completed=downloaded, total=total)
+            else:
+                # Fallback if no total size is known
+                progress.update(task_id, completed=downloaded)
+        elif d['status'] == 'finished':
+            if task_id is not None:
+                total = d.get('total_bytes', 100)
+                progress.update(task_id, completed=total, total=total)
+
+    ydl_opts['progress_hooks'] = [my_hook]
     
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            error_code = ydl.download([url])
-            if error_code != 0:
-                print(f"Error downloading audio for {url}")
-                return None
-            return f"{output_path_base}.wav"
+        with progress:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                error_code = ydl.download([url])
+                if error_code != 0:
+                    console.print(f"[bold red]Error downloading audio for {url}[/bold red]")
+                    return None
+                return f"{output_path_base}.wav"
     except Exception as e:
-        print(f"Exception during audio download: {e}")
+        console.print(f"[bold red]Exception during audio download:[/bold red] {e}")
         return None

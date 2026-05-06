@@ -62,7 +62,9 @@ def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[
     console.print(f"🧠 [dim]Loading model into Mac GPU memory...[/dim]")
     
     decode_options = {
-        "condition_on_previous_text": False
+        "condition_on_previous_text": False,
+        "temperature": 0.0, # Force Greedy Decoding for speed & stability
+        "fp16": True
     }
     if config.source_lang:
         decode_options["language"] = config.source_lang

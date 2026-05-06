@@ -26,19 +26,15 @@ def get_video_info(url: str, config: YtxConfig) -> Dict[str, Any]:
         return {}
 
 def download_audio(url: str, output_path_base: str, config: YtxConfig) -> Optional[str]:
-    """Download audio using yt-dlp and ffmpeg to a specific base path.
-    Returns the path to the extracted audio file.
+    """Download audio using yt-dlp. We download the lowest bitrate m4a file 
+    for blazing fast speed, as Whisper downsamples to 16kHz anyway.
+    Returns the path to the downloaded audio file.
     """
     ydl_opts = {
-        'format': 'bestaudio/best',
+        'format': 'm4a/worstaudio/bestaudio', # Grab the smallest m4a, fallback to worstaudio, then bestaudio
         'quiet': True,
         'no_warnings': True,
         'outtmpl': f"{output_path_base}.%(ext)s",
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'wav', # wav or mp3 is fine, wav is good for whisper
-            'preferredquality': '192',
-        }],
     }
 
     if config.verbose:
@@ -50,7 +46,12 @@ def download_audio(url: str, output_path_base: str, config: YtxConfig) -> Option
                 if error_code != 0:
                     print(f"Error downloading audio for {url}")
                     return None
-                return f"{output_path_base}.wav"
+                
+                import glob
+                downloaded_files = glob.glob(f"{output_path_base}.*")
+                if downloaded_files:
+                    return downloaded_files[0]
+                return None
         except Exception as e:
             print(f"Exception during audio download: {e}")
             return None
@@ -97,7 +98,13 @@ def download_audio(url: str, output_path_base: str, config: YtxConfig) -> Option
                 if error_code != 0:
                     console.print(f"[bold red]Error downloading audio for {url}[/bold red]")
                     return None
-                return f"{output_path_base}.wav"
+                
+                # yt-dlp might download an m4a, webm, etc. Let's find out what it saved as
+                import glob
+                downloaded_files = glob.glob(f"{output_path_base}.*")
+                if downloaded_files:
+                    return downloaded_files[0]
+                return None
     except Exception as e:
         console.print(f"[bold red]Exception during audio download:[/bold red] {e}")
         return None

@@ -75,16 +75,17 @@ def translate_with_cloud(segments: List[Dict[str, Any]], source_lang: str, targe
         system_role = "You are an expert transcript editor. You only output valid JSON arrays without markdown wrappers."
         task_instruction = (
             f"Clean up and format the following JSON subtitle segments in {source_lang}.\n"
-            f"Fix grammar/spelling and silently remove repetitive hallucinations (e.g., repeating nonsense) caused by background noise.\n"
+            f"Fix grammar/spelling and SILENTLY REMOVE repetitive hallucinations (e.g., repeating nonsense, repeated syllables) caused by background noise. Leave the text string empty if the whole segment is a hallucination.\n"
             f"Do NOT translate it to another language."
         )
         action_msg = f"🧹 [cyan]Running AI clean-up pass on {source_lang} transcript ({model})...[/cyan]"
     else:
         system_role = "You are a precise subtitle translator and editor. You only output valid JSON arrays without markdown wrappers."
+        hinglish_rule = " (Note: If target is Hinglish, you MUST use the English/Latin alphabet, not Devanagari script!)" if target_lang.lower() == "hinglish" else ""
         task_instruction = (
-            f"Translate the following JSON subtitle segments from {source_lang} to {target_lang}.\n"
-            f"IMPORTANT: While translating, also act as a clean-up editor. If you see repetitive hallucinations "
-            f"(e.g., repeating the same word infinitely) caused by background noise, silently remove the gibberish."
+            f"Translate the following JSON subtitle segments from {source_lang} to {target_lang}.{hinglish_rule}\n"
+            f"IMPORTANT: While translating, also act as a strict clean-up editor. If you see repetitive hallucinations "
+            f"(e.g., repeating the same word infinitely, repeated syllables, or blocks of text where the exact same words repeat for 10+ seconds) caused by background noise, SILENTLY REMOVE the gibberish. Leave the text string empty if the whole segment is a hallucination."
         )
         action_msg = f"☁️  [cyan]Translating to {target_lang} using Cloud API ({model})...[/cyan]"
 
@@ -124,95 +125,92 @@ def translate_with_cloud(segments: List[Dict[str, Any]], source_lang: str, targe
         return None
 
 def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_lang: str, cli_name: str, cli_command: str) -> List[Dict[str, Any]]:
-    """Translate or clean segments by writing them to a temp file and passing instructions to a local AI CLI tool."""
-    import tempfile
+    """Translate or clean segments by embedding them inline in the prompt for a local AI CLI tool."""
     import subprocess
-    import re
-    
-    with tempfile.NamedTemporaryFile('w', delete=False, suffix='.json') as f:
-        json.dump(segments, f, ensure_ascii=False, indent=2)
-        temp_input = f.name
-        
+
+    segments_json = json.dumps(segments, ensure_ascii=False)
     is_same_lang = (source_lang == target_lang)
-    
+
     if is_same_lang:
-        system_role = "You are an expert transcript editor."
         task_instruction = (
-            f"Read the file '{temp_input}'. It contains a JSON array of subtitle segments in {source_lang}. "
-            f"Your task is to CLEAN UP the 'text' field of every segment. "
-            f"Fix spelling/grammar mistakes and remove repetitive hallucinations (e.g., endless repeating nonsense) caused by background noise. "
-            f"DO NOT translate to another language. Keep it in {source_lang}."
+            f"You are an expert transcript editor. Below is a JSON array of subtitle segments in {source_lang}.\n"
+            f"TASK: Clean up the 'text' field of every segment. Fix spelling/grammar mistakes and SILENTLY REMOVE "
+            f"repetitive hallucinations (e.g., endless repeating nonsense, repeated syllables, or blocks where the same words repeat for 10+ seconds) caused by background noise. "
+            f"Leave the text string empty if the whole segment is a hallucination. "
+            f"DO NOT translate to another language. Keep it in {source_lang}.\n"
         )
         action_msg = f"🤖 [cyan]Invoking {cli_name} for AI clean-up pass... This may take a moment.[/cyan]"
     else:
-        system_role = "You are an expert translator and transcript editor."
+        hinglish_rule = " IMPORTANT: If target is Hinglish, you MUST use the English/Latin alphabet only, NOT Devanagari script." if target_lang.lower() == "hinglish" else ""
         task_instruction = (
-            f"Read the file '{temp_input}'. It contains a JSON array of subtitle segments. "
-            f"Translate the 'text' field of every segment from {source_lang} to {target_lang}. "
-            f"IMPORTANT: While translating, also act as a clean-up editor. If you see repetitive hallucinations "
-            f"(e.g., endless repeating nonsense) caused by background noise, silently remove the gibberish."
+            f"You are an expert subtitle translator. Below is a JSON array of subtitle segments.\n"
+            f"TASK: Translate the 'text' field of every segment from {source_lang} to {target_lang}.{hinglish_rule} "
+            f"While translating, also silently remove any repetitive hallucinations "
+            f"(e.g., repeated words/syllables for 10+ seconds) — leave 'text' empty for fully hallucinated segments.\n"
         )
-        action_msg = f"🤖 [cyan]Invoking {cli_name} to translate/clean-up... This may take a moment.[/cyan]"
+        action_msg = f"🤖 [cyan]Invoking {cli_name} to translate to {target_lang}... This may take a moment.[/cyan]"
 
     prompt = (
-        f"{system_role} {task_instruction} "
-        f"Do NOT change the 'start' or 'end' timestamps. "
-        f"DO NOT write to a file! Output ONLY the completely processed valid JSON array directly to standard output. "
-        f"Do not include conversational text or markdown wrappers."
+        f"{task_instruction}"
+        f"RULES:\n"
+        f"- Do NOT change 'start' or 'end' timestamp values.\n"
+        f"- Output ONLY the raw JSON array. No markdown fences, no explanation, no extra text.\n\n"
+        f"INPUT JSON:\n{segments_json}"
     )
-    
-    # Construct the command
-    if cli_command == "claude" or cli_command == "claude_code":
+
+    # Construct the command — embed prompt as inline argument
+    if cli_command in ("claude", "claude_code"):
         cmd = ["claude", "-p", prompt]
     elif cli_command == "opencode":
-        # OpenCode uses 'run' for a non-interactive, single prompt execution
         cmd = ["opencode", "run", prompt]
     elif cli_command == "ollama":
-        # Assumes llama3 is installed; if not, ollama will pull or fail. 
-        cmd = ["ollama", "run", "llama3", prompt] 
+        cmd = ["ollama", "run", "llama3", prompt]
     else:
-        # Default fallback for goose, agent, gemini CLI
         cmd = [cli_command, prompt]
-        
+
     console.print(action_msg)
-    
+
+    result = None
     try:
-        # Run the tool and capture its standard output directly
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+
         if result.returncode != 0:
-            console.print(f"⚠️ [yellow]{cli_name} returned an error: {result.stderr}[/yellow]")
+            console.print(f"⚠️ [yellow]{cli_name} exited with error (rc={result.returncode}):[/yellow]\n{result.stderr[:500]}")
             return None
-            
+
         content = result.stdout.strip()
-        
-        # Clean up markdown if the AI disobeyed
+
+        if not content:
+            console.print(f"⚠️ [bold red]{cli_name} returned empty output.[/bold red]")
+            if result.stderr:
+                console.print(f"stderr: {result.stderr[:300]}")
+            return None
+
+        # Strip markdown code fences if the model disobeyed
         if content.startswith("```json"):
             content = content[7:]
         elif content.startswith("```"):
             content = content[3:]
         if content.endswith("```"):
             content = content[:-3]
-            
-        # Try to find the JSON array boundary just in case it printed conversational text anyway
+
+        # Extract JSON array even if surrounded by conversational text
         start_idx = content.find("[")
         end_idx = content.rfind("]")
         if start_idx != -1 and end_idx != -1:
-            content = content[start_idx:end_idx+1]
-            
-        translated_segments = json.loads(content.strip())
-        return translated_segments
-        
+            content = content[start_idx:end_idx + 1]
+
+        return json.loads(content.strip())
+
+    except subprocess.TimeoutExpired:
+        console.print(f"⚠️ [bold red]{cli_name} timed out after 300s.[/bold red]")
     except json.JSONDecodeError as e:
         console.print(f"⚠️ [bold red]Failed to parse {cli_name} output as JSON:[/bold red] {e}")
-        if config.verbose:
-            print("Raw Output:", result.stdout)
+        if result:
+            console.print(f"Raw output (first 500 chars): {result.stdout[:500]}")
     except Exception as e:
         console.print(f"⚠️ [bold red]CLI execution failed:[/bold red] {e}")
-    finally:
-        if os.path.exists(temp_input):
-            os.remove(temp_input)
-            
+
     return None
 
 def translate_segments(segments: List[Dict[str, Any]], source_lang: str, config: YtxConfig) -> List[Dict[str, Any]]:
@@ -238,14 +236,23 @@ def translate_segments(segments: List[Dict[str, Any]], source_lang: str, config:
         translated = translate_with_cli(segments, source_lang, target_lang, cli_name, cli_command)
         if translated:
             return translated
-            
+
+        # Same-language: argos has no monolingual package — just return originals
+        if source_lang == target_lang:
+            console.print("[yellow]CLI failed; no fallback for same-language cleanup. Using original transcript.[/yellow]")
+            return segments
+
         console.print("[yellow]Falling back to local offline argos translation...[/yellow]")
-        
+
     elif getattr(config, 'translation_method', 'argos') == "cloud":
         translated = translate_with_cloud(segments, source_lang, target_lang)
         if translated:
             return translated
-            
+
+        if source_lang == target_lang:
+            console.print("[yellow]Cloud failed; no fallback for same-language cleanup. Using original transcript.[/yellow]")
+            return segments
+
         console.print("[yellow]Falling back to local offline argos translation...[/yellow]")
 
     try:

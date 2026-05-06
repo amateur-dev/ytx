@@ -27,6 +27,7 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument("--allow-auto-subs", action="store_true", help="Permit YouTube auto-generated subtitles as a fallback")
     parser.add_argument("--source-lang", type=str, help="Prefer a specific source language; otherwise auto-detect")
     parser.add_argument("--to", type=str, dest="target_lang", help="Translate transcript to the target language code")
+    parser.add_argument("--translator", type=str, default="argos", help="Translator to use (e.g., argos, cloud, cli_opencode, cli_claude_code)")
     
     parser.add_argument("--format", choices=["srt", "vtt", "txt", "json"], default="srt", help="Choose output format")
     parser.add_argument("--model", choices=["tiny", "base", "small", "medium", "large-v3"], default="small", help="Select faster-whisper model size")
@@ -34,6 +35,7 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     
     parser.add_argument("--keep-audio", action="store_true", help="Keep downloaded audio after transcription")
     parser.add_argument("--verbose", action="store_true", help="Show full internal tool output for debugging")
+    parser.add_argument("--force-transcribe", action="store_true", help="Force local transcription even if official subtitles exist")
 
     return parser.parse_args(args)
 
@@ -142,7 +144,9 @@ def main():
         args.model != "small",
         args.output != "output",
         args.keep_audio,
-        args.verbose
+        args.verbose,
+        args.translator != "argos",
+        args.force_transcribe,
     ])
 
     config = None
@@ -182,8 +186,10 @@ def main():
             model_size=args.model,
             output_dir=args.output,
             keep_audio=args.keep_audio,
-            verbose=args.verbose
+            verbose=args.verbose,
+            force_transcribe=args.force_transcribe,
         )
+        config.translation_method = args.translator
 
     import time
     start_time = time.time()

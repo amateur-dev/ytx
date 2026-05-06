@@ -4,12 +4,22 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ytx"
-version = "0.1.0"
-description = "Local-first command-line tool for YouTube transcripts and translation"
+version = "1.0.0"
+description = "Local-first CLI for YouTube transcription & AI translation — Apple Silicon accelerated"
+readme = "README.md"
+license = { text = "MIT" }
 authors = [
-    { name = "Developer" }
+    { name = "ytx contributors" }
 ]
 requires-python = ">=3.10"
+keywords = ["youtube", "transcription", "whisper", "translation", "subtitles", "cli", "apple-silicon", "mlx"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
 dependencies = [
     "yt-dlp",
     "faster-whisper",

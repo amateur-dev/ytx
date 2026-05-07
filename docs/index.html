@@ -253,14 +253,18 @@
             position: relative;
             width: 100%;
             max-width: 900px;
-            background: #000;
+            background: var(--surface-color);
             border-radius: 8px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
             aspect-ratio: 16/9;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
             overflow: hidden;
+            text-align: left;
+            padding: 1.5rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 1.1rem;
+            line-height: 1.5;
         }
 
         .demo-wrapper::before {
@@ -274,27 +278,27 @@
             animation: rgb-border 15s linear infinite;
         }
 
-        .demo-placeholder {
-            color: var(--neon-cyan);
-            font-size: 1.2rem;
-            border: 1px dashed rgba(0, 243, 255, 0.5);
-            padding: 2rem;
-            border-radius: 8px;
-            background: rgba(0, 243, 255, 0.05);
-            z-index: 1;
+        #demo-terminal {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
         }
 
-        .demo-media {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 8px;
-            z-index: 2;
-            opacity: 0; /* Hidden until loaded */
-            transition: opacity 0.5s ease;
+        .demo-line {
+            margin-bottom: 0.3rem;
+            opacity: 0;
+            animation: fadeIn 0.1s forwards;
+        }
+
+        .c-yellow { color: #ffbd2e; }
+        .c-green { color: var(--neon-green); }
+        .c-cyan { color: var(--neon-cyan); }
+        .c-dim { color: var(--text-muted); }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
         }
     </style>
 </head>
@@ -337,12 +341,14 @@
     <section class="demo-section">
         <h2 class="section-title">See It In Action</h2>
         <div class="demo-wrapper">
-            <div class="demo-placeholder">
-                <span>[ 🎬 Drop your demo.gif or demo.mp4 in the docs folder ]</span>
+            <div class="terminal-header">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
             </div>
-            <!-- When you have your demo ready, uncomment this img or video tag! -->
-            <!-- <img src="demo.gif" alt="ytx CLI Demo" class="demo-media" onload="this.style.opacity=1" /> -->
-            <!-- <video src="demo.mp4" autoplay loop muted playsinline class="demo-media" onloadeddata="this.style.opacity=1"></video> -->
+            <div id="demo-terminal">
+                <!-- Lines populated by JS -->
+            </div>
         </div>
     </section>
 
@@ -389,6 +395,86 @@
         }
 
         setTimeout(typeWriter, 1000);
+
+        // Demo Terminal Sequence Simulator
+        const demoTerminal = document.getElementById('demo-terminal');
+        const sequenceSteps = [
+            { t: 'input', text: 'ytx "https://youtu.be/dQw4w9WgXcQ" --to Spanish --translator cli_claude_code', delay: 800 },
+            { t: 'out', text: '\n--- Processing https://youtu.be/dQw4w9WgXcQ ---', delay: 400 },
+            { t: 'out', text: 'Title: Never Gonna Give You Up', delay: 200 },
+            { t: 'out', text: 'No usable subtitles found. Falling back to local transcription.', delay: 400 },
+            { t: 'out', text: '📥 Downloading audio track...', delay: 200 },
+            { t: 'prog', text: 'Downloading audio... [████████████████████] 100%', delay: 1000 },
+            { t: 'out', text: '⚡ Using Apple Silicon MLX GPU acceleration!', css: 'c-yellow', delay: 300 },
+            { t: 'out', text: '📦 Checking/downloading Whisper AI model \'large-v3\'...', css: 'c-dim', delay: 400 },
+            { t: 'out', text: '🧠 Loading model into Mac GPU memory...', css: 'c-dim', delay: 800 },
+            { t: 'spin', text: 'Transcribing audio using Mac GPU... (Incredibly fast!)', delay: 1500 },
+            { t: 'out', text: '✅ Detected language: English', css: 'c-green', delay: 100 },
+            { t: 'out', text: '✨ Transcription complete!', css: 'c-green', delay: 200 },
+            { t: 'out', text: '🤖 Invoking cli_claude_code to translate to Spanish... This may take a moment.', css: 'c-cyan', delay: 500 },
+            { t: 'spin', text: 'cli_claude_code thinking... 0m 02s elapsed', delay: 2000 },
+            { t: 'out', text: 'Saved translation to: output/Never_Gonna_Give_You_Up/source.translated.Spanish.srt', delay: 300 },
+            { t: 'out', text: 'Saved transcription to: output/Never_Gonna_Give_You_Up/source.transcribed.srt', delay: 100 }
+        ];
+
+        async function playDemoSequence() {
+            demoTerminal.innerHTML = '';
+            
+            for (const step of sequenceSteps) {
+                const line = document.createElement('div');
+                line.className = 'demo-line';
+                if (step.css) line.classList.add(step.css);
+                
+                if (step.t === 'input') {
+                    line.innerHTML = `<span class="prompt">~ ❯</span> <span class="command"></span><span class="cursor"></span>`;
+                    demoTerminal.appendChild(line);
+                    const cmdSpan = line.querySelector('.command');
+                    for (let c = 0; c < step.text.length; c++) {
+                        cmdSpan.textContent += step.text[c];
+                        await new Promise(r => setTimeout(r, 40));
+                    }
+                    line.querySelector('.cursor').style.display = 'none';
+                } else if (step.t === 'spin') {
+                    line.innerHTML = `⠋ <span class="c-cyan">${step.text}</span>`;
+                    demoTerminal.appendChild(line);
+                    const spinnerChars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+                    let s = 0;
+                    const spinInterval = setInterval(() => {
+                        line.innerHTML = `${spinnerChars[s++ % spinnerChars.length]} <span class="c-cyan">${step.text}</span>`;
+                    }, 80);
+                    await new Promise(r => setTimeout(r, step.delay));
+                    clearInterval(spinInterval);
+                    line.innerHTML = `✔ <span class="c-cyan">${step.text}</span>`;
+                } else if (step.t === 'prog') {
+                    demoTerminal.appendChild(line);
+                    for (let p = 0; p <= 20; p++) {
+                        const bars = '█'.repeat(p) + ' '.repeat(20 - p);
+                        const pct = (p * 5).toString().padStart(3, ' ');
+                        line.textContent = `Downloading audio... [${bars}] ${pct}%`;
+                        await new Promise(r => setTimeout(r, step.delay / 20));
+                    }
+                } else {
+                    line.textContent = step.text;
+                    demoTerminal.appendChild(line);
+                    await new Promise(r => setTimeout(r, step.delay));
+                }
+                demoTerminal.scrollTop = demoTerminal.scrollHeight;
+            }
+            
+            // Wait and restart
+            await new Promise(r => setTimeout(r, 4000));
+            playDemoSequence();
+        }
+
+        // Start demo sequence when scrolled into view
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                playDemoSequence();
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.querySelector('.demo-section'));
+
     </script>
 </body>
 </html>

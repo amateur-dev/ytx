@@ -64,6 +64,23 @@ ytx doctor
 
 ---
 
+## 🤖 Claude Code & AI Agent Skill
+
+Instead of reading this README and running commands manually, you can install the `ytx` Skill for Claude Code (and compatible agents). This teaches your AI agent exactly how to transcribe and translate videos for you automatically.
+
+Install the skill globally so it's available in all your projects:
+
+```bash
+mkdir -p ~/.claude/skills/ytx
+curl -sL https://raw.githubusercontent.com/your-username/ytx/main/.claude/skills/ytx/SKILL.md -o ~/.claude/skills/ytx/SKILL.md
+```
+
+Now, you can just ask Claude from any terminal:
+> *"Transcribe this YouTube video: https://youtu.be/VIDEO_ID"*  
+> *"Translate this video to Japanese: https://youtu.be/VIDEO_ID"*
+
+---
+
 ## 🚀 Quick Start
 
 ### Interactive Mode (recommended)

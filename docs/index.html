@@ -298,6 +298,19 @@
         .c-cyan { color: var(--neon-cyan); }
         .c-magenta { color: var(--neon-magenta); }
         .c-dim { color: var(--text-muted); }
+        
+        /* Claude Code Styling */
+        .claude-prompt-bar {
+            background-color: #D97757; /* Anthropic Orange */
+            color: #121212;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 8px;
+            display: inline-block;
+        }
+        .c-claude { color: #D97757; }
+        .c-claude-dim { color: #A65A42; }
 
         @keyframes fadeIn {
             to { opacity: 1; }
@@ -401,40 +414,44 @@
         // Demo Terminal Sequence Simulator
         const demoTerminal = document.getElementById('demo-terminal');
         const sequenceSteps = [
-            // SCENARIO 1: Interactive Wizard
+            // SCENARIO 1: Claude Code (AI Agent)
             { t: 'clear' },
-            { t: 'banner', text: 'MODE 1: INTERACTIVE WIZARD' },
-            { t: 'input', text: 'ytx', delay: 400 },
-            { t: 'out', text: ' __  __  _______  __  __\n \\ \\/ / |__   __| \\ \\/ /\n  \\  /     | |     \\  /\n  / /      | |     /  \\\\\n /_/       |_|    /_/\\_\\', css: 'c-magenta', delay: 400 },
-            { t: 'prompt', text: '? Enter YouTube URL › ', typeText: 'https://youtu.be/dQw4w9WgXcQ', delay: 400 },
-            { t: 'prompt', text: '? Translate transcript? (y/N) › ', typeText: 'y', delay: 300 },
-            { t: 'prompt', text: '? Target language › ', typeText: 'Japanese', delay: 400 },
-            { t: 'spin', text: 'Processing with Apple Silicon GPU...', delay: 1500 },
-            { t: 'out', text: '✨ Done! Saved to output/Never_Gonna_Give_You_Up/', css: 'c-green', delay: 3000 },
+            { t: 'banner', text: 'MODE 1: CLAUDE CODE (AI AGENT)' },
+            { t: 'out', text: 'Claude Code Agent active. Loaded Project Skills: [ytx]', css: 'c-dim', delay: 800 },
+            { t: 'claude-input', text: 'Transcribe this video and translate to French: https://youtu.be/dQw4w9WgXcQ', delay: 1200 },
+            { t: 'out', text: '│ 🛠️  Tool Use: run_in_terminal', css: 'c-claude-dim', delay: 600 },
+            { t: 'out', text: '│ $ ytx "https://youtu.be/dQw4w9WgXcQ" --to French --translator cli_claude_code', css: 'c-dim', delay: 1200 },
+            { t: 'spin', text: 'Agent is executing ytx in background...', delay: 3000 },
+            { t: 'out', text: '│ 📥 Downloading audio track...', css: 'c-dim', delay: 600 },
+            { t: 'out', text: '│ ⚡ Using Apple Silicon MLX GPU acceleration!', css: 'c-dim', delay: 400 },
+            { t: 'out', text: '│ ✨ Transcription complete!', css: 'c-dim', delay: 400 },
+            { t: 'out', text: '│ 🤖 Invoking cli_claude_code to translate to French...', css: 'c-dim', delay: 2000 },
+            { t: 'out', text: '│ ✅ Saved translation to: output/Never_Gonna_Give_You_Up/source.translated.French.srt', css: 'c-green', delay: 800 },
+            { t: 'out', text: 'I have successfully transcribed the video! The French translation has been saved to the output directory.', css: 'c-claude', delay: 4000 },
 
-            // SCENARIO 2: Claude Code
+            // SCENARIO 2: Interactive Wizard
             { t: 'clear' },
-            { t: 'banner', text: 'MODE 2: CLAUDE CODE (AI AGENT)' },
-            { t: 'out', text: 'Claude Code Agent active. Local Skills loaded: [ytx]', css: 'c-dim', delay: 500 },
-            { t: 'input', prompt: 'claude ❯', text: 'Transcribe this video and translate to French: https://youtu.be/dQw4w9WgXcQ', delay: 800 },
-            { t: 'out', text: '⚙️  Matched SKILL.md: ytx. Planning execution...', css: 'c-yellow', delay: 600 },
-            { t: 'out', text: '🛠️  Tool Use: run_in_terminal', css: 'c-dim', delay: 200 },
-            { t: 'out', text: '$ ytx "https://youtu.be/dQw4w9WgXcQ" --to French --translator cli_claude_code', css: 'c-dim', delay: 800 },
-            { t: 'spin', text: 'Agent is running ytx in background...', delay: 2000 },
-            { t: 'out', text: 'Claude ❯ I have successfully transcribed the video! The French translation has been saved to output/', css: 'c-cyan', delay: 3000 },
+            { t: 'banner', text: 'MODE 2: INTERACTIVE WIZARD' },
+            { t: 'input', text: 'ytx', delay: 800 },
+            { t: 'out', text: ' __  __  _______  __  __\n \\ \\/ / |__   __| \\ \\/ /\n  \\  /     | |     \\  /\n  / /      | |     /  \\\\\n /_/       |_|    /_/\\_\\', css: 'c-magenta', delay: 800 },
+            { t: 'prompt', text: '? Enter YouTube URL › ', typeText: 'https://youtu.be/dQw4w9WgXcQ', delay: 800 },
+            { t: 'prompt', text: '? Translate transcript? (y/N) › ', typeText: 'y', delay: 600 },
+            { t: 'prompt', text: '? Target language › ', typeText: 'Japanese', delay: 800 },
+            { t: 'spin', text: 'Processing with Apple Silicon GPU...', delay: 2500 },
+            { t: 'out', text: '✨ Done! Saved to output/Never_Gonna_Give_You_Up/', css: 'c-green', delay: 4000 },
 
             // SCENARIO 3: Headless CLI
             { t: 'clear' },
             { t: 'banner', text: 'MODE 3: HEADLESS CLI' },
-            { t: 'input', text: 'ytx "https://youtu.be/dQw4w9WgXcQ" --to Spanish --translator cli_claude_code', delay: 800 },
-            { t: 'out', text: '\n--- Processing https://youtu.be/dQw4w9WgXcQ ---', delay: 400 },
-            { t: 'out', text: '📥 Downloading audio track...', delay: 200 },
-            { t: 'prog', text: 'Downloading audio... [████████████████████] 100%', delay: 1000 },
-            { t: 'out', text: '⚡ Using Apple Silicon MLX GPU acceleration!', css: 'c-yellow', delay: 300 },
-            { t: 'spin', text: 'Transcribing audio using Mac GPU...', delay: 1200 },
-            { t: 'out', text: '✨ Transcription complete!', css: 'c-green', delay: 200 },
-            { t: 'spin', text: 'cli_claude_code thinking...', delay: 1500 },
-            { t: 'out', text: 'Saved translation to: output/Never_Gonna_Give_You_Up/source.translated.Spanish.srt', delay: 3000 }
+            { t: 'input', text: 'ytx "https://youtu.be/dQw4w9WgXcQ" --to Spanish --translator cli_claude_code', delay: 1200 },
+            { t: 'out', text: '\n--- Processing https://youtu.be/dQw4w9WgXcQ ---', delay: 600 },
+            { t: 'out', text: '📥 Downloading audio track...', delay: 400 },
+            { t: 'prog', text: 'Downloading audio... [████████████████████] 100%', delay: 1500 },
+            { t: 'out', text: '⚡ Using Apple Silicon MLX GPU acceleration!', css: 'c-yellow', delay: 500 },
+            { t: 'spin', text: 'Transcribing audio using Mac GPU...', delay: 2000 },
+            { t: 'out', text: '✨ Transcription complete!', css: 'c-green', delay: 400 },
+            { t: 'spin', text: 'cli_claude_code thinking...', delay: 2500 },
+            { t: 'out', text: 'Saved translation to: output/Never_Gonna_Give_You_Up/source.translated.Spanish.srt', delay: 4000 }
         ];
 
         async function playDemoSequence() {
@@ -461,7 +478,16 @@
                     const cmdSpan = line.querySelector('.command');
                     for (let c = 0; c < step.text.length; c++) {
                         cmdSpan.textContent += step.text[c];
-                        await new Promise(r => setTimeout(r, 40));
+                        await new Promise(r => setTimeout(r, 60));
+                    }
+                    line.querySelector('.cursor').style.display = 'none';
+                } else if (step.t === 'claude-input') {
+                    line.innerHTML = `<br><span class="claude-prompt-bar">Claude</span> <span class="command"></span><span class="cursor" style="background:#D97757"></span>`;
+                    demoTerminal.appendChild(line);
+                    const cmdSpan = line.querySelector('.command');
+                    for (let c = 0; c < step.text.length; c++) {
+                        cmdSpan.textContent += step.text[c];
+                        await new Promise(r => setTimeout(r, 60));
                     }
                     line.querySelector('.cursor').style.display = 'none';
                 } else if (step.t === 'prompt') {
@@ -470,7 +496,7 @@
                     const cmdSpan = line.querySelector('.command');
                     for (let c = 0; c < step.typeText.length; c++) {
                         cmdSpan.textContent += step.typeText[c];
-                        await new Promise(r => setTimeout(r, 50));
+                        await new Promise(r => setTimeout(r, 80));
                     }
                     line.querySelector('.cursor').style.display = 'none';
                 } else if (step.t === 'spin') {

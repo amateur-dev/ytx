@@ -14,6 +14,8 @@
 
 `ytx` is a local-first command-line tool that turns any YouTube video into a clean, accurate transcript — and translates it into any language using your favourite AI. No cloud account required. No data leaves your machine unless you want it to.
 
+👉 **[View the Live Demo & RGB Landing Page](https://amateur-dev.github.io/ytx/)** 🎬
+
 ---
 
 ## ✨ What makes it special?
@@ -64,34 +66,38 @@ ytx doctor
 
 ---
 
-## 🤖 Claude Code & AI Agent Skill
+## 🚀 Quick Start
 
-Instead of reading this README and running commands manually, you can install the `ytx` Skill for Claude Code (and compatible agents). This teaches your AI agent exactly how to transcribe and translate videos for you automatically.
+There are three main ways to use `ytx` based on your workflow:
+
+### Mode 1: Claude Code & AI Agent Skill (Recommended)
+
+Instead of reading this README and running commands manually, you can install the `ytx` Skill for Claude Code (and compatible agents). This teaches your AI agent exactly how to transcribe and translate videos for you autonomously.
 
 Install the skill globally so it's available in all your projects:
 
 ```bash
 mkdir -p ~/.claude/skills/ytx
-curl -sL https://raw.githubusercontent.com/your-username/ytx/main/.claude/skills/ytx/SKILL.md -o ~/.claude/skills/ytx/SKILL.md
+curl -sL https://raw.githubusercontent.com/amateur-dev/ytx/main/.claude/skills/ytx/SKILL.md -o ~/.claude/skills/ytx/SKILL.md
 ```
 
-Now, you can just ask Claude from any terminal:
+Now, just launch `claude` and ask it:
 > *"Transcribe this YouTube video: https://youtu.be/VIDEO_ID"*  
 > *"Translate this video to Japanese: https://youtu.be/VIDEO_ID"*
 
----
+### Mode 2: Interactive Wizard
 
-## 🚀 Quick Start
-
-### Interactive Mode (recommended)
+If you prefer a guided UI, just run the command with no arguments:
 
 ```bash
 ytx
 ```
 
-The wizard guides you through everything — URL, translation, output format — and auto-opens the result folder when done.
+The terminal wizard guides you through everything — URL, translation, output format — and auto-opens the result folder when done.
 
-### Headless / Scripting Mode
+### Mode 3: Headless / Scripting Mode
+
+If you are writing bash scripts or know exactly what you want:
 
 ```bash
 # Transcribe a video (no translation)

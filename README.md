@@ -1,40 +1,44 @@
-```
- __  __  _______  __  __
- \ \/ / |__   __| \ \/ /
-  \  /     | |     \  /
-  / /      | |     /  \
- /_/       |_|    /_/\_\
-```
+# ytx
 
-> **YouTube → Text. Instantly. Locally. Free.**
+> **Fast, local transcripts and translations for YouTube videos.**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square)](https://www.python.org)
 [![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-MLX%20GPU-black?style=flat-square&logo=apple)](https://github.com/ml-explore/mlx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-`ytx` is a local-first command-line tool that turns any YouTube video into a clean, accurate transcript — and translates it into any language using your favourite AI. No cloud account required. No data leaves your machine unless you want it to.
+`ytx` is a local-first command-line tool designed for creators, editors, researchers, and archivists. It turns YouTube videos you are authorized to process into clean, highly accurate transcripts and translates them into multiple languages using on-device AI. 
+
+No cloud transcription accounts required. No data leaves your machine unless you explicitly connect a translation API.
 
 👉 **[View the Live Demo & RGB Landing Page](https://amateur-dev.github.io/ytx/)** 🎬
 
 ---
 
-## ✨ What makes it special?
+## ✨ Features
 
 | | |
 |---|---|
-| ⚡ **Blazing fast on Apple Silicon** | Uses `mlx-whisper` to run the full `large-v3` Whisper model on your Mac GPU. A 10-minute video transcribes in under 30 seconds. |
-| 🧠 **Best-in-class accuracy** | Locked to `whisper-large-v3` — the highest-quality open-source speech model available. No quality trade-offs. |
-| 🌍 **AI Translation** | Pipe results through OpenCode, Claude Code, or any Cloud API (OpenAI / Anthropic / Gemini / OpenRouter) for stunning human-quality translations. |
-| 🛑 **Anti-Hallucination** | The AI editor automatically detects and silently removes Whisper's repetitive hallucination loops — pristine output every time. |
-| 🎛 **Beautiful interactive wizard** | Run `ytx` for a guided RGB-animated TUI. It remembers your preferences as a preset so future runs are instant. |
-| 📦 **Fully local, fully free** | Everything runs on your hardware. No API key needed for transcription. Bring your own key only if you want AI translation. |
+| ⚡ **Blazing Fast on Apple Silicon** | Uses `mlx-whisper` to run the full `large-v3` Whisper model on your Mac GPU. Process a 10-minute video locally in under 30 seconds. |
+| 🧠 **Studio-Grade Accuracy** | Locked to `whisper-large-v3` — delivering pristine, open-source speech recognition for researchers and creators. |
+| 🌍 **Universal Translation** | Pipe transcripts through local agents (Claude Code, OpenCode) or Cloud APIs (OpenAI / Anthropic) to localize your content. |
+| 🛡️ **Anti-Hallucination Editor** | Automatically detects and silently removes Whisper's repetitive audio hallucinations caused by background noise. |
+| 🎛 **Interactive Wizard** | Run `ytx` for a guided TUI that remembers your preferences, making repetitive workflows effortless. |
+| 🔒 **Privacy-First Processing** | Everything runs on your hardware. Bring your own API key only if you require cloud translation. |
+
+---
+
+## 🎯 Why this exists
+
+Content workflows demand speed, accuracy, and privacy. Existing transcription services often require uploading massive files to the cloud, paying per-minute fees, or dealing with vendor lock-in. 
+
+`ytx` was built to leverage the incredible power of modern local hardware (like Apple Silicon) and the Whisper model, putting high-fidelity transcription and localization directly in the terminal for the content you manage.
 
 ---
 
 ## 🖥 Requirements
 
 - **Python 3.10+**
-- **ffmpeg** (used by yt-dlp internally)
+- **ffmpeg** (used internally for audio stream processing)
 
 ```bash
 # macOS
@@ -48,10 +52,10 @@ sudo apt install ffmpeg
 
 ## 📦 Installation
 
+Install `ytx` directly from GitHub:
+
 ```bash
-git clone https://github.com/your-username/ytx.git
-cd ytx
-pip install -e .
+pip install git+https://github.com/amateur-dev/ytx.git
 ```
 
 Check your environment is ready:
@@ -60,9 +64,7 @@ Check your environment is ready:
 ytx doctor
 ```
 
-> **First run notice:** `ytx` will automatically download the open-source `whisper-large-v3` model from Hugging Face (~3 GB) on first use. You can verify the model at:
-> - **Apple Silicon (Mac):** https://huggingface.co/mlx-community/whisper-large-v3-mlx
-> - **All other platforms:** https://huggingface.co/Systran/faster-whisper-large-v3
+> **First-run notice:** `ytx` automatically downloads the open-source `whisper-large-v3` model from Hugging Face (~3 GB) on its first execution.
 
 ---
 
@@ -72,7 +74,7 @@ There are three main ways to use `ytx` based on your workflow:
 
 ### Mode 1: Claude Code & AI Agent Skill (Recommended)
 
-Instead of reading this README and running commands manually, you can install the `ytx` Skill for Claude Code (and compatible agents). This teaches your AI agent exactly how to transcribe and translate videos for you autonomously.
+Instead of manually crafting commands, you can install the `ytx` Skill for Claude Code (and compatible AI agents). This teaches your agent how to transcribe and translate videos autonomously.
 
 Install the skill globally so it's available in all your projects:
 
@@ -87,35 +89,29 @@ Now, just launch `claude` and ask it:
 
 ### Mode 2: Interactive Wizard
 
-If you prefer a guided UI, just run the command with no arguments:
+If you prefer a guided UI, simply run the command with no arguments:
 
 ```bash
 ytx
 ```
 
-The terminal wizard guides you through everything — URL, translation, output format — and auto-opens the result folder when done.
+The terminal wizard will guide you through URL input, translation choices, and output formats.
 
 ### Mode 3: Headless / Scripting Mode
 
 If you are writing bash scripts or know exactly what you want:
 
 ```bash
-# Transcribe a video (no translation)
+# Transcribe a video you control (no translation)
 ytx "https://youtu.be/VIDEO_ID"
 
-# Transcribe + translate to Spanish via OpenCode
-ytx "https://youtu.be/VIDEO_ID" --to Spanish --translator cli_opencode
-
-# Translate to English using Claude Code
-ytx "https://youtu.be/VIDEO_ID" --to English --translator cli_claude_code
+# Transcribe + translate to Spanish using Claude CLI
+ytx "https://youtu.be/VIDEO_ID" --to Spanish --translator cli_claude_code
 
 # Translate using a Cloud API (requires OPENROUTER_API_KEY / OPENAI_API_KEY etc.)
 ytx "https://youtu.be/VIDEO_ID" --to French --translator cloud
 
-# Batch process a list of URLs from a file
-ytx --input urls.txt --to English --translator cli_opencode
-
-# Only use official YouTube subtitles (no local transcription)
+# Only pull existing official subtitles (skip local transcription)
 ytx "https://youtu.be/VIDEO_ID" --official-only
 
 # Output as plain text instead of SRT
@@ -128,55 +124,48 @@ ytx "https://youtu.be/VIDEO_ID" --format txt
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--to <language>` | *(none)* | Translate to this language (e.g. `English`, `Spanish`, `Hindi`) |
+| `--to <language>` | *(none)* | Translate to this language (e.g. `English`, `Spanish`) |
 | `--translator <engine>` | `argos` | Translation engine: `argos` · `cloud` · `cli_opencode` · `cli_claude_code` · `cli_ollama` |
 | `--format <fmt>` | `srt` | Output format: `srt` · `vtt` · `txt` · `json` |
 | `--output <dir>` | `output/` | Directory to write results into |
-| `--official-only` | off | Only download official YouTube subtitles; error if none exist |
-| `--allow-auto-subs` | off | Accept YouTube auto-generated captions as fallback |
+| `--official-only` | off | Only download official subtitles; error if none exist |
+| `--allow-auto-subs` | off | Accept auto-generated captions as fallback |
 | `--source-lang <code>` | auto | Force a specific source language (e.g. `hi`, `en`) |
 | `--force-transcribe` | off | Skip official subtitles and always run local transcription |
-| `--keep-audio` | off | Keep the downloaded audio file after transcription |
-| `--input <file>` | *(none)* | Read YouTube URLs from a text file (one per line) |
-| `--verbose` | off | Show full debug output |
+| `--keep-audio` | off | Keep the processed audio file after transcription |
+| `--input <file>` | *(none)* | Read URLs from a text file for batch processing |
 
 ---
 
 ## 🌐 Translation Engines
 
-`ytx` supports multiple translation backends. Pick the one that fits your setup:
+`ytx` supports multiple translation backends to suit your privacy and workflow needs:
 
-### Local AI CLI tools (free, no API key)
+### Local AI CLI tools (Free)
 These must be installed on your system separately.
+- `cli_opencode`
+- `cli_claude_code`
+- `cli_ollama`
 
-| Engine | Flag | Install |
-|--------|------|---------|
-| [OpenCode](https://opencode.ai) | `cli_opencode` | `npm i -g opencode-ai` |
-| [Claude Code](https://claude.ai/code) | `cli_claude_code` | `npm i -g @anthropic-ai/claude-code` |
-| [Ollama](https://ollama.com) | `cli_ollama` | [ollama.com](https://ollama.com) |
+### Cloud APIs (Bring your own key)
+Set one of these environment variables (or add to a `.env` file), then run with `--translator cloud`:
+- `OPENROUTER_API_KEY`
+- `OPENAI_API_KEY`
+- `ANTHROPIC_API_KEY`
+- `GEMINI_API_KEY`
 
-### Cloud APIs (bring your own key)
-Set one of these environment variables (or add to a `.env` file):
-
-```bash
-OPENROUTER_API_KEY=...   # Recommended — access 100+ models, has free tier
-OPENAI_API_KEY=...
-ANTHROPIC_API_KEY=...
-GEMINI_API_KEY=...
-```
-
-Then run with `--translator cloud`.
-
-### Offline fallback
-If no AI tool or API key is available, `ytx` falls back to [Argos Translate](https://github.com/argosopentech/argos-translate) — a fully offline neural translation engine. It downloads language packages on first use.
+### Offline Fallback
+If no AI tool or API key is available, `ytx` defaults to Argos Translate — a fully offline neural translation engine.
 
 ---
 
 ## 📁 Output Structure
 
+Processed files are saved in an organized, human-readable directory:
+
 ```
 output/
-└── Video Title/
+└── Video_Title/
     ├── source.info.json               ← video metadata
     ├── source.transcribed.srt         ← raw local transcription
     └── source.translated.English.srt  ← AI-translated output
@@ -184,55 +173,18 @@ output/
 
 ---
 
-## 🔬 How it works
+## ⚖️ Compliance and Permitted Use
 
-```
-YouTube URL
-    │
-    ▼
-yt-dlp fetches metadata
-    │
-    ├─ Official subtitles exist? ──► Download & done
-    │
-    └─ No subtitles
-         │
-         ▼
-    Stream m4a audio (no conversion)
-         │
-         ▼
-    whisper-large-v3
-    (MLX GPU on Apple Silicon / CPU everywhere else)
-         │
-         ▼
-    Segments with timestamps
-         │
-         ├─ No translation? ──► Write SRT / VTT / TXT / JSON
-         │
-         └─ Translation requested
-                │
-                ▼
-           AI engine (CLI / Cloud / Argos)
-           + anti-hallucination cleanup
-                │
-                ▼
-           Translated SRT written & folder opened
-```
+`ytx` is a workflow tool designed for content creators, researchers, editors, and archivists to process videos they are legally authorized to interact with.
 
----
+Users of `ytx` are responsible for ensuring they have the appropriate rights, licenses, or authorizations to transcribe, translate, and process the media they input. Do not use this tool to process, redistribute, or reproduce copyrighted material without permission from the rights holder. Ensure your use complies with the Terms of Service of the platforms you access.
 
-## 🤝 Contributing
+## 📝 Trademark Notice
 
-Pull requests welcome. Please open an issue first for large changes.
-
-```bash
-git clone https://github.com/your-username/ytx.git
-cd ytx
-pip install -e .
-ytx doctor  # verify your setup
-```
+"YouTube" is a trademark of Google LLC. `ytx` is an independent open-source project and is not affiliated with, endorsed by, or sponsored by Google LLC or YouTube in any way.
 
 ---
 
 ## 📄 License
 
-MIT © ytx contributors
+MIT © amateur-dev

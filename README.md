@@ -1,37 +1,52 @@
 # ytx
 
-> **Fast, local transcripts and translations for YouTube videos you’re authorized to process.**
+> **Local-first transcription and translation for authorized YouTube workflows, optimized for Apple Silicon and AI agents.**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square)](https://www.python.org)
 [![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-MLX%20GPU-black?style=flat-square&logo=apple)](https://github.com/ml-explore/mlx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-`ytx` is a local-first command-line tool designed for creators, editors, researchers, and archivists. It turns YouTube videos you are authorized to process into clean, highly accurate transcripts and translates them into multiple languages using on-device AI. 
+`ytx` is a terminal-native workflow tool that turns videos you are authorized to process into clean, highly accurate transcripts and localized subtitles. 
 
-No cloud transcription accounts required. No data leaves your machine unless you explicitly connect a translation API.
+Built around on-device privacy, `ytx` requires no cloud transcription accounts. Processing stays on your hardware unless you explicitly connect a translation API.
 
 👉 **[View the Live Demo & RGB Landing Page](https://amateur-dev.github.io/ytx/)** 🎬
 
 ---
 
-## ✨ Features
+## ⚡ Why ytx is different
 
-| | |
-|---|---|
-| ⚡ **Blazing Fast on Apple Silicon** | Uses `mlx-whisper` to run the full `large-v3` Whisper model on your Mac GPU. Transcribe long-form video locally in seconds on modern Apple Silicon. |
-| 🧠 **Studio-Grade Accuracy** | Locked to `whisper-large-v3` — delivering pristine, open-source speech recognition for researchers and creators. |
-| 🌍 **Universal Translation** | Pipe transcripts through local agents (Claude Code, OpenCode) or Cloud APIs (OpenAI / Anthropic) to localize your content. |
-| 🛡️ **Anti-Hallucination Editor** | Automatically detects and silently removes Whisper's repetitive audio hallucinations caused by background noise. |
-| 🎛 **Interactive Wizard** | Run `ytx` for a guided TUI that remembers your preferences, making repetitive workflows effortless. |
-| 🔒 **Privacy-First Processing** | Everything runs on your hardware. Bring your own API key only if you require cloud translation. |
+Most tools are simple transcript fetchers or generic wrappers. `ytx` is engineered as a complete local-first workflow engine:
+
+- **Local-first default:** No vendor lock-in or per-minute cloud fees for transcription.
+- **Apple Silicon speed:** Native `mlx-whisper` integration maximizes Mac GPU performance.
+- **AI-agent native:** Ships with a `SKILL.md` to be operated autonomously by Claude Code and other terminal agents.
+- **Anti-hallucination cleanup:** Automatically identifies and scrubs repetitive Whisper hallucination loops caused by background noise.
+- **Translation built in:** Not just transcription—seamlessly pipes output through local AI CLIs, offline packages, or cloud APIs.
 
 ---
 
-## 🎯 Why this exists
+## ✨ Key Features
 
-Content workflows demand speed, accuracy, and privacy. Existing transcription services often require uploading massive files to the cloud, paying per-minute fees, or dealing with vendor lock-in. 
+| | |
+|---|---|
+| 🔒 **Local-first Privacy** | Everything processes on your hardware. Bring your own API key only if you require cloud translation. |
+| ⚡ **Apple Silicon Speed** | Transcribe long-form video locally in seconds using optimized `mlx-whisper` models. |
+| 🤖 **Agent-Native Workflow** | Ready for Claude Code with a built-in `SKILL.md`. Just ask your agent to run the transcription. |
+| 🛡️ **Anti-Hallucination Cleanup** | Silently removes transcription gibberish and audio hallucination loops for pristine text output. |
+| 🌍 **Translation Built In** | Seamlessly localize via local agents (Claude, OpenCode), offline models (Argos), or Cloud APIs. |
+| 🎛 **Interactive + Headless Modes** | Use the guided interactive UI, script it headlessly, or let an AI agent drive. |
 
-`ytx` was built to leverage the incredible power of modern local hardware (like Apple Silicon) and the Whisper model, putting high-fidelity transcription and localization directly in the terminal for the content you manage.
+---
+
+## 🎯 Who it is for
+
+`ytx` is designed for professionals who need speed, accuracy, and privacy:
+- **Creators & Editors:** Generating local subtitles and editing markers without uploading raw footage.
+- **Researchers & Analysts:** Processing interviews and talks securely on-device.
+- **Archivists:** Structuring and localizing authorized video libraries.
+- **Terminal-First Developers:** Keeping media workflows entirely within the CLI.
+- **AI-Agent Users:** Automating tedious transcription tasks via Claude Code.
 
 ---
 
@@ -86,8 +101,8 @@ curl -sL https://raw.githubusercontent.com/amateur-dev/ytx/main/.claude/skills/y
 ```
 
 Now, just launch `claude` and ask it:
-> *"Transcribe this YouTube video: https://youtu.be/VIDEO_ID"*  
-> *"Translate this video to Japanese: https://youtu.be/VIDEO_ID"*
+> *"Transcribe this video: https://youtu.be/VIDEO_ID"*  
+> *"Translate this authorized video to Japanese: https://youtu.be/VIDEO_ID"*
 
 ### Mode 2: Interactive Wizard
 
@@ -165,7 +180,7 @@ If no AI tool or API key is available, `ytx` defaults to Argos Translate — a f
 
 Processed files are saved in an organized, human-readable directory:
 
-```
+```text
 output/
 └── Video_Title/
     ├── source.info.json               ← video metadata

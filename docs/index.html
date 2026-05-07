@@ -320,6 +320,7 @@
             position: relative;
             margin: 1.5rem 0 1rem 0;
             display: flex;
+            align-items: stretch; /* Make children equal height */
         }
         .claude-splash-title {
             position: absolute;
@@ -328,15 +329,19 @@
             background: var(--surface-color);
             padding: 0 0.5rem;
             color: #D97757;
+            font-size: 0.9rem;
         }
         .claude-splash-left {
-            flex: 1;
+            flex: 0 0 40%;
             text-align: center;
-            border-right: 1px solid #D97757;
-            padding: 1.5rem 1rem;
+            border-right: 1px solid rgba(217, 119, 87, 0.4); /* Subtler border */
+            padding: 1.5rem 1rem 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .claude-splash-right {
-            flex: 2;
+            flex: 1;
             padding: 1.5rem 2rem;
             display: flex;
             flex-direction: column;
@@ -344,9 +349,11 @@
         }
         .claude-mascot {
             color: #D97757;
-            line-height: 1.1;
-            margin: 1rem 0;
-            font-size: 0.9rem;
+            line-height: 1.05;
+            margin: 1rem auto;
+            font-size: 0.85rem;
+            text-align: center;
+            overflow: hidden; /* Prevent ASCII art from overflowing */
         }
 
         @keyframes fadeIn {
@@ -455,16 +462,16 @@
             { t: 'clear' },
             { t: 'banner', text: 'MODE 1: CLAUDE CODE (AI AGENT)' },
             { t: 'splash', delay: 1500 },
-            { t: 'claude-input', text: 'Transcribe this video and translate to French: https://youtu.be/dQw4w9WgXcQ', delay: 1200 },
-            { t: 'out', text: '│ 🛠️  Tool Use: run_in_terminal', css: 'c-claude-dim', delay: 600 },
-            { t: 'out', text: '│ $ ytx "https://youtu.be/dQw4w9WgXcQ" --to French --translator cli_claude_code', css: 'c-dim', delay: 1200 },
-            { t: 'spin', text: 'Agent is executing ytx in background...', delay: 3000 },
-            { t: 'out', text: '│ 📥 Downloading audio track...', css: 'c-dim', delay: 600 },
-            { t: 'out', text: '│ ⚡ Using Apple Silicon MLX GPU acceleration!', css: 'c-dim', delay: 400 },
-            { t: 'out', text: '│ ✨ Transcription complete!', css: 'c-dim', delay: 400 },
-            { t: 'out', text: '│ 🤖 Invoking cli_claude_code to translate to French...', css: 'c-dim', delay: 2000 },
-            { t: 'out', text: '│ ✅ Saved translation to: output/Never_Gonna_Give_You_Up/source.translated.French.srt', css: 'c-green', delay: 800 },
-            { t: 'out', text: 'I have successfully transcribed the video! The French translation has been saved to the output directory.', css: 'c-claude', delay: 4000 },
+            { t: 'claude-input', text: 'Transcribe this video and translate to French:\nhttps://youtu.be/dQw4w9WgXcQ', delay: 1000 },
+            { t: 'out', text: '│ 🛠️  Tool Use: run_in_terminal', css: 'c-claude-dim', delay: 400 },
+            { t: 'out', text: '│ $ ytx "https://youtu.be/dQw4w9WgXcQ" --to French --translator cli_claude_code', css: 'c-dim', delay: 800 },
+            { t: 'spin', text: 'Agent is executing ytx in background...', delay: 2000 },
+            { t: 'out', text: '│ 📥 Downloading audio track...', css: 'c-dim', delay: 400 },
+            { t: 'out', text: '│ ⚡ Using Apple Silicon MLX GPU acceleration!', css: 'c-dim', delay: 300 },
+            { t: 'out', text: '│ ✨ Transcription complete!', css: 'c-dim', delay: 300 },
+            { t: 'out', text: '│ 🤖 Invoking cli_claude_code to translate to French...', css: 'c-dim', delay: 1500 },
+            { t: 'out', text: '│ ✅ Saved translation to: output/.../source.translated.French.srt', css: 'c-green', delay: 600 },
+            { t: 'out', text: 'I have successfully transcribed the video! The French translation has been saved to the output directory.', css: 'c-claude', delay: 3000 },
 
             // SCENARIO 2: Interactive Wizard
             { t: 'clear' },
@@ -551,7 +558,7 @@
                     const cmdSpan = line.querySelector('.command');
                     for (let c = 0; c < step.text.length; c++) {
                         cmdSpan.textContent += step.text[c];
-                        await new Promise(r => setTimeout(r, 60));
+                        await new Promise(r => setTimeout(r, 40));
                     }
                     line.querySelector('.cursor').style.display = 'none';
                 } else if (step.t === 'prompt') {

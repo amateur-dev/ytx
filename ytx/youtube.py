@@ -20,10 +20,12 @@ def get_video_info(url: str, config: YtxConfig) -> Dict[str, Any]:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             return info
+    except yt_dlp.utils.DownloadError as e:
+        raise RuntimeError(f"yt-dlp blocked or failed: {e.msg}") from e
     except Exception as e:
         if config.verbose:
-            print(f"Exception during metadata extraction: {e}")
-        return {}
+            console.print(f"[bold red]Exception during metadata extraction: {e}[/bold red]")
+        raise RuntimeError(f"Unexpected error during metadata extraction: {e}") from e
 
 def download_audio(url: str, output_path_base: str, config: YtxConfig) -> Optional[str]:
     """Download audio using yt-dlp. We download the lowest bitrate m4a file 
@@ -44,17 +46,17 @@ def download_audio(url: str, output_path_base: str, config: YtxConfig) -> Option
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 error_code = ydl.download([url])
                 if error_code != 0:
-                    print(f"Error downloading audio for {url}")
-                    return None
+                    raise RuntimeError(f"yt-dlp returned error code {error_code} while downloading audio for {url}")
                 
                 import glob
                 downloaded_files = glob.glob(f"{output_path_base}.*")
                 if downloaded_files:
                     return downloaded_files[0]
-                return None
+                raise RuntimeError("Audio download completed but file not found.")
+        except yt_dlp.utils.DownloadError as e:
+            raise RuntimeError(f"yt-dlp blocked or failed: {e.msg}") from e
         except Exception as e:
-            print(f"Exception during audio download: {e}")
-            return None
+            raise RuntimeError(f"Unexpected error during audio download: {e}") from e
 
     # For non-verbose mode, use a rich progress bar
     progress = Progress(
@@ -96,15 +98,15 @@ def download_audio(url: str, output_path_base: str, config: YtxConfig) -> Option
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 error_code = ydl.download([url])
                 if error_code != 0:
-                    console.print(f"[bold red]Error downloading audio for {url}[/bold red]")
-                    return None
+                    raise RuntimeError(f"yt-dlp returned error code {error_code} while downloading audio for {url}")
                 
                 # yt-dlp might download an m4a, webm, etc. Let's find out what it saved as
                 import glob
                 downloaded_files = glob.glob(f"{output_path_base}.*")
                 if downloaded_files:
                     return downloaded_files[0]
-                return None
+                raise RuntimeError("Audio download completed but file not found.")
+    except yt_dlp.utils.DownloadError as e:
+        raise RuntimeError(f"yt-dlp blocked or failed: {e.msg}") from e
     except Exception as e:
-        console.print(f"[bold red]Exception during audio download:[/bold red] {e}")
-        return None
+        raise RuntimeError(f"Unexpected error during audio download: {e}") from e

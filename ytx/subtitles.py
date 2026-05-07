@@ -61,8 +61,7 @@ def download_subtitles(url: str, lang: str, is_auto: bool, output_path_base: str
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             error_code = ydl.download([url])
             if error_code != 0:
-                print(f"Error downloading subtitles for {url}")
-                return None
+                raise RuntimeError(f"yt-dlp returned error code {error_code} while downloading subtitles for {url}")
             
             # Find the downloaded file
             ext = config.output_format if config.output_format in ['srt', 'vtt'] else 'vtt'
@@ -74,11 +73,15 @@ def download_subtitles(url: str, lang: str, is_auto: bool, output_path_base: str
             base_name = os.path.basename(output_path_base)
             
             for file in os.listdir(dir_name):
-                if file.startswith(base_name) and file.endswith(f".{lang}.vtt") or file.endswith(f".{lang}.srt"):
+                if file.startswith(base_name) and (file.endswith(f".{lang}.vtt") or file.endswith(f".{lang}.srt")):
                     return os.path.join(dir_name, file)
                     
-            return expected_file if os.path.exists(expected_file) else None
+            if os.path.exists(expected_file):
+                return expected_file
+            else:
+                raise RuntimeError("Subtitle download completed but file not found.")
             
+    except yt_dlp.utils.DownloadError as e:
+        raise RuntimeError(f"yt-dlp blocked or failed to download subtitles: {e.msg}") from e
     except Exception as e:
-        print(f"Exception during subtitle download: {e}")
-        return None
+        raise RuntimeError(f"Unexpected error during subtitle download: {e}") from e

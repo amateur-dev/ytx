@@ -46,3 +46,7 @@ ytx "https://youtu.be/VIDEO_ID" --official-only
 
 ## Note
 By default, the processed files are placed in an `output/` folder in the current directory. When the job completes, read the generated files from that directory if the user asks you questions about the video's content.
+
+## Error Handling
+If `ytx` throws an error indicating that `yt-dlp` was blocked or failed to download the video/audio (e.g., HTTP Error 403, "Sign in to confirm you're not a bot", etc.), this is usually because you (the AI agent) are running on a cloud server/VPS whose IP is blocked by YouTube. 
+In this case, explicitly tell the user that the video could not be downloaded because the agent's environment is likely being blocked by YouTube, and advise them to run `ytx` directly on their local machine instead.

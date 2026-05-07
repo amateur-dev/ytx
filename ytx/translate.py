@@ -51,9 +51,8 @@ def translate_with_cloud(segments: List[Dict[str, Any]], source_lang: str, targe
         
         # Suppress litellm logging noise
         litellm.suppress_debug_info = True
-    except ImportError:
-        console.print("[bold red]litellm is not installed. Run 'pip install litellm'[/bold red]")
-        return None
+    except ImportError as e:
+        raise RuntimeError("Cloud translation requires 'litellm'. Run 'pip install litellm'.") from e
 
     # Determine which model to use based on available keys
     model = None
@@ -66,8 +65,7 @@ def translate_with_cloud(segments: List[Dict[str, Any]], source_lang: str, targe
     elif os.environ.get("GEMINI_API_KEY"):
         model = "gemini/gemini-1.5-flash"
     else:
-        console.print("[bold red]No valid Cloud API key found in environment.[/bold red]")
-        return None
+        raise RuntimeError("No valid Cloud API key found in environment (OPENROUTER_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY).")
 
     is_same_lang = (source_lang == target_lang)
     
@@ -117,15 +115,21 @@ def translate_with_cloud(segments: List[Dict[str, Any]], source_lang: str, targe
         if content.endswith("```"):
             content = content[:-3]
             
-        return json.loads(content.strip())
+        try:
+            return json.loads(content.strip())
+        except json.JSONDecodeError as e:
+            raise RuntimeError(f"Cloud API returned invalid JSON: {e}\nRaw output preview: {content[:200]}...") from e
         
     except Exception as e:
-        console.print(f"⚠️ [bold red]Cloud API translation failed:[/bold red] {e}")
-        return None
+        raise RuntimeError(f"Cloud API translation failed: {e}") from e
 
 def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_lang: str, cli_name: str, cli_command: str) -> List[Dict[str, Any]]:
     """Translate or clean segments by embedding them inline in the prompt for a local AI CLI tool."""
     import subprocess
+    import shutil
+
+    if not shutil.which(cli_command.split()[0]):
+        raise RuntimeError(f"Translation failed: The command '{cli_command.split()[0]}' is not found in your PATH. Please install {cli_name}.")
 
     segments_json = json.dumps(segments, ensure_ascii=False)
     is_same_lang = (source_lang == target_lang)
@@ -189,16 +193,12 @@ def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_
         result = subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
 
         if result.returncode != 0:
-            console.print(f"⚠️ [yellow]{cli_name} exited with error (rc={result.returncode}):[/yellow]\n{result.stderr[:500]}")
-            return None
+            raise RuntimeError(f"{cli_name} exited with error code {result.returncode}.\nStderr: {result.stderr[:500]}")
 
         content = result.stdout.strip()
 
         if not content:
-            console.print(f"⚠️ [bold red]{cli_name} returned empty output.[/bold red]")
-            if result.stderr:
-                console.print(f"stderr: {result.stderr[:300]}")
-            return None
+            raise RuntimeError(f"{cli_name} returned empty output. Stderr: {result.stderr[:300]}")
 
         # Strip markdown code fences if the model disobeyed
         if content.startswith("```json"):
@@ -217,13 +217,10 @@ def translate_with_cli(segments: List[Dict[str, Any]], source_lang: str, target_
         return json.loads(content.strip())
 
     except json.JSONDecodeError as e:
-        console.print(f"⚠️ [bold red]Failed to parse {cli_name} output as JSON:[/bold red] {e}")
-        if result:
-            console.print(f"Raw output (first 500 chars): {result.stdout[:500]}")
+        raw_output = result.stdout[:500] if result else "None"
+        raise RuntimeError(f"Failed to parse {cli_name} output as JSON: {e}\nRaw output: {raw_output}") from e
     except Exception as e:
-        console.print(f"⚠️ [bold red]CLI execution failed:[/bold red] {e}")
-
-    return None
+        raise RuntimeError(f"CLI execution failed for {cli_name}: {e}") from e
 
 def translate_segments(segments: List[Dict[str, Any]], source_lang: str, config: YtxConfig) -> List[Dict[str, Any]]:
     """
@@ -270,9 +267,8 @@ def translate_segments(segments: List[Dict[str, Any]], source_lang: str, config:
     try:
         import argostranslate.package
         import argostranslate.translate
-    except ImportError:
-        print("argostranslate module not found. Skipping translation.")
-        return segments
+    except ImportError as e:
+        raise RuntimeError("argostranslate module not found. Run 'pip install argostranslate' or check your environment.") from e
 
     # Check if package is installed
     installed_packages = argostranslate.package.get_installed_packages()
@@ -284,10 +280,12 @@ def translate_segments(segments: List[Dict[str, Any]], source_lang: str, config:
             
     if not package_found:
         print(f"Translation package for {source_lang} -> {target_lang} not installed. Attempting to install...")
-        success = _install_argos_package(source_lang, target_lang)
-        if not success:
-            print(f"Failed to find Argos Translate package for {source_lang} -> {target_lang}. Skipping translation.")
-            return segments
+        try:
+            success = _install_argos_package(source_lang, target_lang)
+            if not success:
+                raise RuntimeError(f"Failed to find Argos Translate package for {source_lang} -> {target_lang}.")
+        except Exception as e:
+            raise RuntimeError(f"Error while installing Argos package: {e}") from e
             
     print(f"Translating {len(segments)} segments from {source_lang} to {target_lang}...")
     translated_segments = []
@@ -301,6 +299,7 @@ def translate_segments(segments: List[Dict[str, Any]], source_lang: str, config:
                 "text": translated_text
             })
         except Exception as e:
+            raise RuntimeError(f"Argos translation failed for segment '{text}': {e}") from e
             if config.verbose:
                 print(f"Translation error on segment '{text}': {e}")
             # Fallback to original text if translation fails

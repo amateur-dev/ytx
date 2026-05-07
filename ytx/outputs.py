@@ -15,22 +15,26 @@ def prepare_output_dir(base_dir: str, video_title: str) -> str:
     if not safe_title:
         safe_title = "unknown_video"
     out_dir = os.path.join(base_dir, safe_title)
-    os.makedirs(out_dir, exist_ok=True)
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+    except OSError as e:
+        raise RuntimeError(f"Failed to create output directory '{out_dir}': {e}. Check folder permissions.") from e
     return out_dir
 
 def save_info_json(info: Dict[str, Any], output_dir: str) -> str:
     filepath = os.path.join(output_dir, "source.info.json")
-    with open(filepath, "w", encoding="utf-8") as f:
-        # Extract only a subset of info to save space, or just dump it all.
-        # It's usually big, so maybe a subset.
-        subset = {
-            "id": info.get("id"),
-            "title": info.get("title"),
-            "uploader": info.get("uploader"),
-            "duration": info.get("duration"),
-            "view_count": info.get("view_count"),
-        }
-        json.dump(subset, f, indent=2, ensure_ascii=False)
+    try:
+        with open(filepath, "w", encoding="utf-8") as f:
+            subset = {
+                "id": info.get("id"),
+                "title": info.get("title"),
+                "uploader": info.get("uploader"),
+                "duration": info.get("duration"),
+                "view_count": info.get("view_count"),
+            }
+            json.dump(subset, f, indent=2, ensure_ascii=False)
+    except OSError as e:
+        print(f"Warning: Failed to save info json at {filepath}: {e}")
     return filepath
 
 def get_base_filepath(output_dir: str, prefix: str) -> str:

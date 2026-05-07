@@ -50,7 +50,11 @@ def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[
     if not config.verbose:
         console.print(f"📦 [dim]Checking/downloading Whisper AI model 'large-v3'...[/dim]")
     from huggingface_hub import snapshot_download
-    snapshot_download(repo_id=repo_id)
+    
+    try:
+        snapshot_download(repo_id=repo_id)
+    except Exception as e:
+        raise RuntimeError(f"Failed to download or find MLX model '{repo_id}' from Hugging Face. Are you connected to the internet? Error: {e}") from e
     
     console.print(f"🧠 [dim]Loading model into Mac GPU memory...[/dim]")
     
@@ -78,6 +82,8 @@ def transcribe_audio_mlx(audio_path: str, config: YtxConfig) -> Tuple[List[Dict[
                 verbose=config.verbose,
                 **decode_options
             )
+    except Exception as e:
+        raise RuntimeError(f"MLX GPU transcription failed: {e}. Check if you have enough unified memory.") from e
     finally:
         if not config.verbose:
             _devnull.close()
@@ -109,7 +115,11 @@ def transcribe_audio_faster_whisper(audio_path: str, config: YtxConfig) -> Tuple
     if not config.verbose:
         console.print(f"📦 [dim]Checking/downloading Whisper AI model 'large-v3'...[/dim]")
     from faster_whisper.utils import download_model as fw_download_model
-    fw_download_model(model_size)
+    
+    try:
+        fw_download_model(model_size)
+    except Exception as e:
+        raise RuntimeError(f"Failed to download or find Faster-Whisper model '{model_size}' from Hugging Face. Are you connected to the internet? Error: {e}") from e
     
     console.print(f"🧠 [dim]Loading Whisper AI model 'large-v3' into memory...[/dim]")
     
@@ -124,20 +134,26 @@ def transcribe_audio_faster_whisper(audio_path: str, config: YtxConfig) -> Tuple
     try:
         # device="auto" defaults to CUDA if available, else CPU.
         model = WhisperModel(model_size, device="auto", compute_type="default")
+    except Exception as e:
+        raise RuntimeError(f"Failed to load Faster-Whisper model '{model_size}': {e}. Check if you have enough system memory.") from e
     finally:
         if not config.verbose:
             sys.stderr.close()
             sys.stderr = original_stderr
     
     console.print(f"🎙️  [cyan]Analyzing audio file to detect spoken language...[/cyan]")
-    segments, info = model.transcribe(
-        audio_path,
-        beam_size=5,
-        language=config.source_lang,
-        condition_on_previous_text=False,
-        vad_filter=True, # Explicitly enable Voice Activity Detection
-        vad_parameters=dict(min_silence_duration_ms=500) # Skip silences over 500ms
-    )
+    
+    try:
+        segments, info = model.transcribe(
+            audio_path,
+            beam_size=5,
+            language=config.source_lang,
+            condition_on_previous_text=False,
+            vad_filter=True, # Explicitly enable Voice Activity Detection
+            vad_parameters=dict(min_silence_duration_ms=500) # Skip silences over 500ms
+        )
+    except Exception as e:
+        raise RuntimeError(f"Transcription failed: {e}") from e
     
     detected_lang = info.language
     lang_name = get_language_name(detected_lang)

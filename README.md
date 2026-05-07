@@ -1,6 +1,6 @@
 # ytx
 
-> **Fast, local transcripts and translations for YouTube videos.**
+> **Fast, local transcripts and translations for YouTube videos you’re authorized to process.**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square)](https://www.python.org)
 [![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-MLX%20GPU-black?style=flat-square&logo=apple)](https://github.com/ml-explore/mlx)
@@ -18,7 +18,7 @@ No cloud transcription accounts required. No data leaves your machine unless you
 
 | | |
 |---|---|
-| ⚡ **Blazing Fast on Apple Silicon** | Uses `mlx-whisper` to run the full `large-v3` Whisper model on your Mac GPU. Process a 10-minute video locally in under 30 seconds. |
+| ⚡ **Blazing Fast on Apple Silicon** | Uses `mlx-whisper` to run the full `large-v3` Whisper model on your Mac GPU. Transcribe long-form video locally in seconds on modern Apple Silicon. |
 | 🧠 **Studio-Grade Accuracy** | Locked to `whisper-large-v3` — delivering pristine, open-source speech recognition for researchers and creators. |
 | 🌍 **Universal Translation** | Pipe transcripts through local agents (Claude Code, OpenCode) or Cloud APIs (OpenAI / Anthropic) to localize your content. |
 | 🛡️ **Anti-Hallucination Editor** | Automatically detects and silently removes Whisper's repetitive audio hallucinations caused by background noise. |
@@ -69,6 +69,8 @@ ytx doctor
 ---
 
 ## 🚀 Quick Start
+
+> **Use only with content you own, control, or are otherwise authorized to process.**
 
 There are three main ways to use `ytx` based on your workflow:
 
@@ -133,7 +135,7 @@ ytx "https://youtu.be/VIDEO_ID" --format txt
 | `--source-lang <code>` | auto | Force a specific source language (e.g. `hi`, `en`) |
 | `--force-transcribe` | off | Skip official subtitles and always run local transcription |
 | `--keep-audio` | off | Keep the processed audio file after transcription |
-| `--input <file>` | *(none)* | Read URLs from a text file for batch processing |
+| `--input <file>` | *(none)* | Read authorized video URLs from a text file for queued processing |
 
 ---
 

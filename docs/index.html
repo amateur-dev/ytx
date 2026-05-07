@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ytx | Local YouTube Transcripts</title>
+    <title>ytx | Local Video Transcripts</title>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -348,7 +348,7 @@
   / /      | |     /  \ 
  /_/       |_|    /_/\_\
         </pre>
-        <h1>YouTube &rarr; Text</h1>
+        <h1>Video &rarr; Text</h1>
         <p class="subtitle">Fast, local transcripts and translations for videos you're authorized to process.</p>
 
         <div class="terminal-container">
@@ -404,6 +404,12 @@
         </div>
     </section>
 
+    <footer style="margin-top: 2rem; margin-bottom: 2rem; padding: 2rem 5%; text-align: center; border-top: 1px solid rgba(0, 243, 255, 0.1); color: var(--text-muted); font-size: 0.85rem; line-height: 1.6;">
+        <p style="color: var(--text-main); margin-bottom: 0.5rem; font-weight: bold;">Use only with content you own, control, or are authorized to process.</p>
+        <p>Users are responsible for complying with platform terms, copyright law, and local law. The project does not grant rights to third-party content.</p>
+        <p style="margin-top: 1rem; font-size: 0.75rem; opacity: 0.7;">"YouTube" is a trademark of Google LLC. ytx is an independent open-source project and is not affiliated with, endorsed by, or sponsored by Google LLC or YouTube in any way.</p>
+    </footer>
+
     <script>
         const textToType = 'ytx "https://youtu.be/VIDEO_ID" --to Spanish --translator cli_claude_code';
         const typeContainer = document.getElementById('typewriter');
@@ -432,9 +438,9 @@
             { t: 'clear' },
             { t: 'banner', text: 'MODE 1: CLAUDE CODE (AI AGENT)' },
             { t: 'splash', delay: 1500 },
-            { t: 'claude-input', text: 'Transcribe this video and translate to French:\nhttps://youtu.be/dQw4w9WgXcQ', delay: 1000 },
+            { t: 'claude-input', text: 'Transcribe this video and translate to French:\nhttps://youtu.be/YOUR_VIDEO_ID', delay: 1000 },
             { t: 'out', text: '│ 🛠️  Tool Use: run_in_terminal', css: 'c-claude-dim', delay: 400 },
-            { t: 'out', text: '│ $ ytx "https://youtu.be/dQw4w9WgXcQ" --to French --translator cli_claude_code', css: 'c-dim', delay: 800 },
+            { t: 'out', text: '│ $ ytx "https://youtu.be/YOUR_VIDEO_ID" --to French --translator cli_claude_code', css: 'c-dim', delay: 800 },
             { t: 'spin', text: 'Agent is executing ytx in background...', delay: 2000 },
             { t: 'out', text: '│ 📥 Downloading audio track...', css: 'c-dim', delay: 400 },
             { t: 'out', text: '│ ⚡ Using Apple Silicon MLX GPU acceleration!', css: 'c-dim', delay: 300 },
@@ -448,24 +454,24 @@
             { t: 'banner', text: 'MODE 2: INTERACTIVE WIZARD' },
             { t: 'input', text: 'ytx', delay: 800 },
             { t: 'out', text: ' __  __  _______  __  __\n \\ \\/ / |__   __| \\ \\/ /\n  \\  /     | |     \\  /\n  / /      | |     /  \\\\\n /_/       |_|    /_/\\_\\', css: 'c-magenta', delay: 800 },
-            { t: 'prompt', text: '? Enter YouTube URL › ', typeText: 'https://youtu.be/dQw4w9WgXcQ', delay: 800 },
+            { t: 'prompt', text: '? Enter authorized video URL › ', typeText: 'https://youtu.be/YOUR_VIDEO_ID', delay: 800 },
             { t: 'prompt', text: '? Translate transcript? (y/N) › ', typeText: 'y', delay: 600 },
             { t: 'prompt', text: '? Target language › ', typeText: 'Japanese', delay: 800 },
             { t: 'spin', text: 'Processing with Apple Silicon GPU...', delay: 2500 },
-            { t: 'out', text: '✨ Done! Saved to output/Never_Gonna_Give_You_Up/', css: 'c-green', delay: 4000 },
+            { t: 'out', text: '✨ Done! Saved to output/Your_Authorized_Video/', css: 'c-green', delay: 4000 },
 
             // SCENARIO 3: Headless CLI
             { t: 'clear' },
             { t: 'banner', text: 'MODE 3: HEADLESS CLI' },
-            { t: 'input', text: 'ytx "https://youtu.be/dQw4w9WgXcQ" --to Spanish --translator cli_claude_code', delay: 1200 },
-            { t: 'out', text: '\n--- Processing https://youtu.be/dQw4w9WgXcQ ---', delay: 600 },
+            { t: 'input', text: 'ytx "https://youtu.be/YOUR_VIDEO_ID" --to Spanish --translator cli_claude_code', delay: 1200 },
+            { t: 'out', text: '\n--- Processing https://youtu.be/YOUR_VIDEO_ID ---', delay: 600 },
             { t: 'out', text: '📥 Downloading audio track...', delay: 400 },
             { t: 'prog', text: 'Downloading audio... [████████████████████] 100%', delay: 1500 },
             { t: 'out', text: '⚡ Using Apple Silicon MLX GPU acceleration!', css: 'c-yellow', delay: 500 },
             { t: 'spin', text: 'Transcribing audio using Mac GPU...', delay: 2000 },
             { t: 'out', text: '✨ Transcription complete!', css: 'c-green', delay: 400 },
             { t: 'spin', text: 'cli_claude_code thinking...', delay: 2500 },
-            { t: 'out', text: 'Saved translation to: output/Never_Gonna_Give_You_Up/source.translated.Spanish.srt', delay: 4000 }
+            { t: 'out', text: 'Saved translation to: output/Your_Authorized_Video/source.translated.Spanish.srt', delay: 4000 }
         ];
 
         async function playDemoSequence() {

@@ -311,6 +311,43 @@
         }
         .c-claude { color: #D97757; }
         .c-claude-dim { color: #A65A42; }
+        .c-claude-bold { color: #D97757; font-weight: bold; }
+        .c-white-bold { color: #ffffff; font-weight: bold; }
+
+        .claude-splash-container {
+            border: 1px solid #D97757;
+            border-radius: 4px;
+            position: relative;
+            margin: 1.5rem 0 1rem 0;
+            display: flex;
+        }
+        .claude-splash-title {
+            position: absolute;
+            top: -0.7em;
+            left: 1.5rem;
+            background: var(--surface-color);
+            padding: 0 0.5rem;
+            color: #D97757;
+        }
+        .claude-splash-left {
+            flex: 1;
+            text-align: center;
+            border-right: 1px solid #D97757;
+            padding: 1.5rem 1rem;
+        }
+        .claude-splash-right {
+            flex: 2;
+            padding: 1.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .claude-mascot {
+            color: #D97757;
+            line-height: 1.1;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
 
         @keyframes fadeIn {
             to { opacity: 1; }
@@ -417,7 +454,7 @@
             // SCENARIO 1: Claude Code (AI Agent)
             { t: 'clear' },
             { t: 'banner', text: 'MODE 1: CLAUDE CODE (AI AGENT)' },
-            { t: 'out', text: 'Claude Code Agent active. Loaded Project Skills: [ytx]', css: 'c-dim', delay: 800 },
+            { t: 'splash', delay: 1500 },
             { t: 'claude-input', text: 'Transcribe this video and translate to French: https://youtu.be/dQw4w9WgXcQ', delay: 1200 },
             { t: 'out', text: '│ 🛠️  Tool Use: run_in_terminal', css: 'c-claude-dim', delay: 600 },
             { t: 'out', text: '│ $ ytx "https://youtu.be/dQw4w9WgXcQ" --to French --translator cli_claude_code', css: 'c-dim', delay: 1200 },
@@ -471,6 +508,30 @@
                 if (step.t === 'banner') {
                     line.innerHTML = `<br><span style="background: var(--neon-cyan); color: #000; padding: 2px 8px; font-weight: bold;">${step.text}</span><br><br>`;
                     demoTerminal.appendChild(line);
+                } else if (step.t === 'splash') {
+                    line.innerHTML = `
+                    <div class="claude-splash-container">
+                        <div class="claude-splash-title">Claude Code v2.1.19</div>
+                        <div class="claude-splash-left">
+                            <div class="c-white-bold">Welcome back!</div>
+                            <pre class="claude-mascot">
+   ▄    ▄
+  ████████
+▄██▀▀██▀▀██▄
+▀██████████▀
+  █    █</pre>
+                            <div class="c-dim" style="font-size: 0.85rem">Opus 4.5 · Claude Team<br>~/ytx</div>
+                        </div>
+                        <div class="claude-splash-right">
+                            <div class="c-claude-bold">Tips for getting started</div>
+                            <div class="c-dim" style="margin-bottom: 1rem">Run /init to create a CLAUDE.md file with instructions for Claude</div>
+                            <div style="border-top: 1px solid rgba(217, 119, 87, 0.4); margin-bottom: 1rem;"></div>
+                            <div class="c-claude-bold">Recent activity</div>
+                            <div class="c-dim">No recent activity</div>
+                        </div>
+                    </div>`;
+                    demoTerminal.appendChild(line);
+                    await new Promise(r => setTimeout(r, step.delay));
                 } else if (step.t === 'input') {
                     const p = step.prompt || '~ ❯';
                     line.innerHTML = `<span class="prompt">${p}</span> <span class="command"></span><span class="cursor"></span>`;

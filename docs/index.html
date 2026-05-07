@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ytx | Local Video Transcripts</title>
+    <title>ytx — Local transcription and translation for authorized YouTube workflows</title>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -95,7 +95,7 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 0 20px;
+            padding: 4rem 20px 2rem;
         }
 
         .ascii-art {
@@ -109,16 +109,38 @@
 
         h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: 4rem;
+            font-size: 3.5rem;
             margin-bottom: 1rem;
             text-transform: uppercase;
+            max-width: 900px;
         }
 
         .subtitle {
             color: var(--text-muted);
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             max-width: 800px;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+        
+        .proof-strip {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 4rem;
+            max-width: 1000px;
+        }
+        
+        .proof-pill {
+            background: rgba(0, 243, 255, 0.05);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         /* RGB Border Card */
@@ -337,7 +359,7 @@
 
     <nav>
         <div class="logo">ytx</div>
-        <a href="https://github.com/amateur-dev/ytx" class="github-link">Initialize Repo //</a>
+        <a href="https://github.com/amateur-dev/ytx" class="github-link">Use with Claude Code //</a>
     </nav>
 
     <header>
@@ -348,8 +370,16 @@
   / /      | |     /  \ 
  /_/       |_|    /_/\_\
         </pre>
-        <h1>Video &rarr; Text</h1>
-        <p class="subtitle">Fast, local transcripts and translations for videos you're authorized to process.</p>
+        <h1>Private video transcription, built for the terminal</h1>
+        <p class="subtitle">A local-first CLI for creators, researchers, and AI agents handling authorized YouTube workflows.</p>
+        
+        <div class="proof-strip">
+            <div class="proof-pill">Local-First Privacy</div>
+            <div class="proof-pill">Apple Silicon Optimized</div>
+            <div class="proof-pill">Agent-Native (SKILL.md)</div>
+            <div class="proof-pill">Anti-Hallucination Cleanup</div>
+            <div class="proof-pill">Translation Workflows</div>
+        </div>
 
         <div class="terminal-container">
             <div class="terminal-header">
@@ -361,7 +391,7 @@
                 <span class="code-line comment"># Install ytx globally</span>
                 <span class="code-line"><span class="prompt">~ ❯</span> <span class="command">pip install git+https://github.com/amateur-dev/ytx.git</span></span>
                 <br>
-                <span class="code-line comment"># Transcribe and translate to Spanish using Claude</span>
+                <span class="code-line comment"># Transcribe and translate an authorized video</span>
                 <span class="code-line"><span class="prompt">~ ❯</span> <span class="command" id="typewriter"></span><span class="cursor"></span></span>
             </div>
         </div>
@@ -383,24 +413,34 @@
 
     <section class="features">
         <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h3 class="feature-title">Local-First Privacy</h3>
+            <p class="text-muted">No cloud transcription accounts required. All processing stays securely on your machine unless you explicitly opt into a cloud translation API.</p>
+        </div>
+        <div class="feature-card">
             <div class="feature-icon">⚡</div>
-            <h3 class="feature-title">MLX GPU Acceleration</h3>
-            <p class="text-muted">Blazing fast execution on Apple Silicon. Transcribe long-form video locally in seconds using whisper-large-v3.</p>
+            <h3 class="feature-title">Apple Silicon Speed</h3>
+            <p class="text-muted">Optimized for Mac GPUs with <code>mlx-whisper</code>. Transcribe long-form video locally in seconds, free from per-minute cloud fees.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">🤖</div>
-            <h3 class="feature-title">Claude Code Skill</h3>
-            <p class="text-muted">Ships natively with a SKILL.md. Just tell your AI agent: "Transcribe this video" and watch it handle the CLI autonomously.</p>
+            <h3 class="feature-title">Agent-Native Workflow</h3>
+            <p class="text-muted">Ships with a native <code>SKILL.md</code>. Just ask Claude Code or your preferred terminal agent to run the transcription and watch it operate autonomously.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">🛡️</div>
-            <h3 class="feature-title">Anti-Hallucination</h3>
-            <p class="text-muted">Built-in safeguards that catch and silently remove Whisper's repetitive translation hallucination loops. Pristine output.</p>
+            <h3 class="feature-title">Anti-Hallucination Cleanup</h3>
+            <p class="text-muted">Built-in safeguards automatically identify and silently remove Whisper's repetitive translation hallucination loops caused by background noise.</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">🌍</div>
-            <h3 class="feature-title">Universal Translation</h3>
-            <p class="text-muted">Pipe your transcript through local CLI agents (Claude, OpenCode, Ollama) or Cloud APIs for flawless human-quality translation.</p>
+            <h3 class="feature-title">Translation Built In</h3>
+            <p class="text-muted">Pipe your transcripts directly into local CLI agents (Claude, OpenCode, Ollama), offline packages, or Cloud APIs for flawless localization.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🎛</div>
+            <h3 class="feature-title">Multi-Mode Usability</h3>
+            <p class="text-muted">Trigger workflows via the guided interactive TUI wizard, script it headlessly in your bash pipelines, or let an AI agent drive.</p>
         </div>
     </section>
 
@@ -438,14 +478,14 @@
             { t: 'clear' },
             { t: 'banner', text: 'MODE 1: CLAUDE CODE (AI AGENT)' },
             { t: 'splash', delay: 1500 },
-            { t: 'claude-input', text: 'Transcribe this video and translate to French:\nhttps://youtu.be/YOUR_VIDEO_ID', delay: 1000 },
+            { t: 'claude-input', text: 'Transcribe this authorized video and translate to French:\nhttps://youtu.be/VIDEO_ID', delay: 1000 },
             { t: 'out', text: '│ 🛠️  Tool Use: run_in_terminal', css: 'c-claude-dim', delay: 400 },
-            { t: 'out', text: '│ $ ytx "https://youtu.be/YOUR_VIDEO_ID" --to French --translator cli_claude_code', css: 'c-dim', delay: 800 },
+            { t: 'out', text: '│ $ ytx "https://youtu.be/VIDEO_ID" --to French --translator cli_claude_code', css: 'c-dim', delay: 800 },
             { t: 'spin', text: 'Agent is executing ytx in background...', delay: 2000 },
             { t: 'out', text: '│ 📥 Validating input URL...', css: 'c-dim', delay: 400 },
             { t: 'out', text: '│ ⚡ Using Apple Silicon MLX GPU acceleration!', css: 'c-dim', delay: 300 },
-            { t: 'out', text: '│ ✨ Transcription complete!', css: 'c-dim', delay: 300 },
-            { t: 'out', text: '│ 🤖 Invoking cli_claude_code to translate to French...', css: 'c-dim', delay: 1500 },
+            { t: 'out', text: '│ ✨ Local transcription complete!', css: 'c-dim', delay: 300 },
+            { t: 'out', text: '│ 🤖 Invoking cli_claude_code to clean hallucinations and translate to French...', css: 'c-dim', delay: 1500 },
             { t: 'out', text: '│ ✅ Saved translation to: output/.../source.translated.French.srt', css: 'c-green', delay: 600 },
             { t: 'out', text: 'I have successfully transcribed the video! The French translation has been saved to the output directory.', css: 'c-claude', delay: 3000 },
 
@@ -454,23 +494,23 @@
             { t: 'banner', text: 'MODE 2: INTERACTIVE WIZARD' },
             { t: 'input', text: 'ytx', delay: 800 },
             { t: 'out', text: ' __  __  _______  __  __\n \\ \\/ / |__   __| \\ \\/ /\n  \\  /     | |     \\  /\n  / /      | |     /  \\\\\n /_/       |_|    /_/\\_\\', css: 'c-magenta', delay: 800 },
-            { t: 'prompt', text: '? Enter authorized video URL › ', typeText: 'https://youtu.be/YOUR_VIDEO_ID', delay: 800 },
+            { t: 'prompt', text: '? Enter authorized video URL › ', typeText: 'https://youtu.be/VIDEO_ID', delay: 800 },
             { t: 'prompt', text: '? Translate transcript? (y/N) › ', typeText: 'y', delay: 600 },
             { t: 'prompt', text: '? Target language › ', typeText: 'Japanese', delay: 800 },
-            { t: 'spin', text: 'Processing with Apple Silicon GPU...', delay: 2500 },
+            { t: 'spin', text: 'Processing locally with Apple Silicon GPU...', delay: 2500 },
             { t: 'out', text: '✨ Done! Saved to output/Your_Authorized_Video/', css: 'c-green', delay: 4000 },
 
             // SCENARIO 3: Headless CLI
             { t: 'clear' },
             { t: 'banner', text: 'MODE 3: HEADLESS CLI' },
-            { t: 'input', text: 'ytx "https://youtu.be/YOUR_VIDEO_ID" --to Spanish --translator cli_claude_code', delay: 1200 },
-            { t: 'out', text: '--- Processing https://youtu.be/YOUR_VIDEO_ID ---', delay: 600 },
+            { t: 'input', text: 'ytx "https://youtu.be/VIDEO_ID" --to Spanish --translator cli_claude_code', delay: 1200 },
+            { t: 'out', text: '--- Processing https://youtu.be/VIDEO_ID ---', delay: 600 },
             { t: 'out', text: '📥 Validating input URL...', delay: 400 },
-            { t: 'prog', text: 'Downloading audio... [████████████████████] 100%', delay: 1500 },
+            { t: 'prog', text: 'Extracting audio... [████████████████████] 100%', delay: 1500 },
             { t: 'out', text: '⚡ Using Apple Silicon MLX GPU acceleration!', css: 'c-yellow', delay: 500 },
             { t: 'spin', text: 'Transcribing audio using Mac GPU...', delay: 2000 },
             { t: 'out', text: '✨ Transcription complete!', css: 'c-green', delay: 400 },
-            { t: 'spin', text: 'cli_claude_code thinking...', delay: 2500 },
+            { t: 'spin', text: 'Scrubbing hallucinations and translating...', delay: 2500 },
             { t: 'out', text: 'Saved translation to: output/Your_Authorized_Video/source.translated.Spanish.srt', delay: 4000 }
         ];
 
@@ -511,7 +551,7 @@
                     const cmdSpan = line.querySelector('.command');
                     for (let c = 0; c < step.text.length; c++) {
                         cmdSpan.textContent += step.text[c];
-                        await new Promise(r => setTimeout(r, 40));
+                        await new Promise(r => setTimeout(r, 60));
                     }
                     line.querySelector('.cursor').style.display = 'none';
                 } else if (step.t === 'prompt') {
@@ -539,7 +579,7 @@
                     for (let p = 0; p <= 20; p++) {
                         const bars = '█'.repeat(p) + ' '.repeat(20 - p);
                         const pct = (p * 5).toString().padStart(3, ' ');
-                        line.textContent = `Downloading audio... [${bars}] ${pct}%`;
+                        line.textContent = `Extracting audio... [${bars}] ${pct}%`;
                         await new Promise(r => setTimeout(r, step.delay / 20));
                     }
                 } else {

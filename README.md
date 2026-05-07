@@ -102,16 +102,16 @@ The terminal wizard will guide you through URL input, translation choices, and o
 If you are writing bash scripts or know exactly what you want:
 
 ```bash
-# Transcribe a video you control (no translation)
+# Transcribe your own uploaded video (no translation)
 ytx "https://youtu.be/VIDEO_ID"
 
-# Transcribe + translate to Spanish using Claude CLI
+# Translate a talk/interview you have rights to process to Spanish using Claude CLI
 ytx "https://youtu.be/VIDEO_ID" --to Spanish --translator cli_claude_code
 
 # Translate using a Cloud API (requires OPENROUTER_API_KEY / OPENAI_API_KEY etc.)
 ytx "https://youtu.be/VIDEO_ID" --to French --translator cloud
 
-# Only pull existing official subtitles (skip local transcription)
+# Generate subtitles for editing/accessibility by pulling existing official subtitles
 ytx "https://youtu.be/VIDEO_ID" --official-only
 
 # Output as plain text instead of SRT
@@ -173,13 +173,13 @@ output/
 
 ---
 
-## ⚖️ Compliance and Permitted Use
+## Compliance and permitted use
 
 `ytx` is a workflow tool designed for content creators, researchers, editors, and archivists to process videos they are legally authorized to interact with.
 
-Users of `ytx` are responsible for ensuring they have the appropriate rights, licenses, or authorizations to transcribe, translate, and process the media they input. Do not use this tool to process, redistribute, or reproduce copyrighted material without permission from the rights holder. Ensure your use complies with the Terms of Service of the platforms you access.
+Users of `ytx` are responsible for ensuring they have the appropriate rights, licenses, or authorizations to transcribe, translate, and process the media they input. Do not use this tool to process, redistribute, or reproduce copyrighted material without permission from the rights holder. Ensure your use complies with the Terms of Service of the platforms you access. The project does not grant rights to third-party content.
 
-## 📝 Trademark Notice
+## Trademark notice
 
 "YouTube" is a trademark of Google LLC. `ytx` is an independent open-source project and is not affiliated with, endorsed by, or sponsored by Google LLC or YouTube in any way.
 

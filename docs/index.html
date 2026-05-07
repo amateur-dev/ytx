@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ytx | Local YouTube Transcription</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --surface-color: #0c0c0c;
+            --neon-cyan: #00f3ff;
+            --neon-magenta: #ff00ea;
+            --neon-green: #39ff14;
+            --text-main: #ffffff;
+            --text-muted: #8892b0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Fira Code', monospace;
+            overflow-x: hidden;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* RGB Animated Gradient Background */
+        .rgb-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 0, 234, 0.05), rgba(0, 243, 255, 0.05), transparent 60%);
+            z-index: -1;
+            animation: pulse-bg 10s infinite alternate;
+        }
+
+        @keyframes pulse-bg {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.2); opacity: 1; }
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 5%;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+        }
+
+        .github-link {
+            color: var(--text-main);
+            text-decoration: none;
+            border: 1px solid var(--neon-cyan);
+            padding: 0.5rem 1.5rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+        }
+
+        .github-link:hover {
+            background: var(--neon-cyan);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+
+        header {
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .ascii-art {
+            color: var(--neon-magenta);
+            font-size: 1.2rem;
+            line-height: 1.2;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px rgba(255, 0, 234, 0.5);
+            animation: glitch 5s infinite;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            max-width: 800px;
+            margin-bottom: 3rem;
+        }
+
+        /* RGB Border Card */
+        .terminal-container {
+            position: relative;
+            background: var(--surface-color);
+            padding: 2rem;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 800px;
+            text-align: left;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .terminal-container::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(45deg, var(--neon-cyan), var(--neon-magenta), var(--neon-green), var(--neon-cyan));
+            background-size: 400%;
+            z-index: -1;
+            border-radius: 10px;
+            animation: rgb-border 15s linear infinite;
+        }
+
+        @keyframes rgb-border {
+            0% { background-position: 0 0; }
+            50% { background-position: 400% 0; }
+            100% { background-position: 0 0; }
+        }
+
+        .terminal-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+        }
+        .dot:nth-child(1) { background: #ff5f56; }
+        .dot:nth-child(2) { background: #ffbd2e; }
+        .dot:nth-child(3) { background: #27c93f; }
+
+        .code-line {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .prompt { color: var(--neon-green); }
+        .command { color: #fff; }
+        .comment { color: var(--text-muted); }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 5rem 10%;
+        }
+
+        .feature-card {
+            background: var(--surface-color);
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 10px 30px rgba(0, 243, 255, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-cyan);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+
+        /* Typewriter cursor */
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background-color: var(--neon-cyan);
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="rgb-bg"></div>
+
+    <nav>
+        <div class="logo">ytx</div>
+        <a href="https://github.com/amateur-dev/ytx" class="github-link">Initialize Repo //</a>
+    </nav>
+
+    <header>
+        <pre class="ascii-art">
+ __  __  _______  __  __
+ \ \/ / |__   __| \ \/ /
+  \  /     | |     \  / 
+  / /      | |     /  \ 
+ /_/       |_|    /_/\_\
+        </pre>
+        <h1>YouTube &rarr; Text</h1>
+        <p class="subtitle">Instantly. Locally. Free. Powered by Apple Silicon MLX GPU and AI Agent Skills.</p>
+
+        <div class="terminal-container">
+            <div class="terminal-header">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+            <div id="terminal-content">
+                <span class="code-line comment"># Install ytx globally</span>
+                <span class="code-line"><span class="prompt">~ ❯</span> <span class="command">pip install git+https://github.com/amateur-dev/ytx.git</span></span>
+                <br>
+                <span class="code-line comment"># Transcribe and translate to Spanish using Claude</span>
+                <span class="code-line"><span class="prompt">~ ❯</span> <span class="command" id="typewriter"></span><span class="cursor"></span></span>
+            </div>
+        </div>
+    </header>
+
+    <section class="features">
+        <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3 class="feature-title">MLX GPU Acceleration</h3>
+            <p class="text-muted">Blazing fast execution on Apple Silicon. Transcribe a 10-minute video locally in under 30 seconds using whisper-large-v3.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🤖</div>
+            <h3 class="feature-title">Claude Code Skill</h3>
+            <p class="text-muted">Ships natively with a SKILL.md. Just tell your AI agent: "Transcribe this video" and watch it handle the CLI autonomously.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🛡️</div>
+            <h3 class="feature-title">Anti-Hallucination</h3>
+            <p class="text-muted">Built-in safeguards that catch and silently remove Whisper's repetitive translation hallucination loops. Pristine output.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🌍</div>
+            <h3 class="feature-title">Universal Translation</h3>
+            <p class="text-muted">Pipe your transcript through local CLI agents (Claude, OpenCode, Ollama) or Cloud APIs for flawless human-quality translation.</p>
+        </div>
+    </section>
+
+    <script>
+        const textToType = 'ytx "https://youtu.be/VIDEO_ID" --to Spanish --translator cli_claude_code';
+        const typeContainer = document.getElementById('typewriter');
+        let i = 0;
+
+        function typeWriter() {
+            if (i < textToType.length) {
+                typeContainer.innerHTML += textToType.charAt(i);
+                i++;
+                setTimeout(typeWriter, 50);
+            } else {
+                setTimeout(() => {
+                    typeContainer.innerHTML = '';
+                    i = 0;
+                    typeWriter();
+                }, 5000);
+            }
+        }
+
+        setTimeout(typeWriter, 1000);
+    </script>
+</body>
+</html>

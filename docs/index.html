@@ -325,50 +325,6 @@
         .c-claude { color: #D97757; }
         .c-claude-dim { color: #A65A42; }
         .c-claude-bold { color: #D97757; font-weight: bold; }
-        .c-white-bold { color: #ffffff; font-weight: bold; }
-
-        .claude-splash-container {
-            border: 1px solid rgba(217, 119, 87, 0.6); /* Slightly more dim to match screenshot */
-            border-radius: 6px;
-            position: relative;
-            margin: 1.5rem 0 1rem 0;
-            display: flex;
-            align-items: stretch; /* Make children equal height */
-        }
-        .claude-splash-title {
-            position: absolute;
-            top: -0.8em;
-            left: 1.5rem;
-            background: var(--surface-color);
-            padding: 0 0.5rem;
-            color: #D97757;
-            font-size: 0.85rem;
-        }
-        .claude-splash-left {
-            flex: 0 0 40%;
-            text-align: center;
-            border-right: 1px solid rgba(217, 119, 87, 0.4); /* Subtler border */
-            padding: 1.5rem 1rem 1rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .claude-splash-right {
-            flex: 1;
-            padding: 1.5rem 2rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .claude-mascot {
-            color: #D97757;
-            line-height: 1.0; /* Tigher line height for the ascii block art */
-            letter-spacing: 0px;
-            margin: 1.5rem auto;
-            font-size: 0.85rem;
-            text-align: center;
-            overflow: hidden; /* Prevent ASCII art from overflowing */
-        }
 
         @keyframes fadeIn {
             to { opacity: 1; }
@@ -530,30 +486,7 @@
                     line.innerHTML = `<br><span style="background: var(--neon-cyan); color: #000; padding: 2px 8px; font-weight: bold;">${step.text}</span><br><br>`;
                     demoTerminal.appendChild(line);
                 } else if (step.t === 'splash') {
-                    line.innerHTML = `
-                    <div class="claude-splash-container">
-                        <div class="claude-splash-title">Claude Code v2.1.19</div>
-                        <div class="claude-splash-left">
-                            <div class="c-white-bold">Welcome back!</div>
-                            <pre class="claude-mascot">
-    ▄▄        ▄▄    
-   ████      ████   
-   ████      ████   
- ██████████████████ 
- ██████████████████ 
- ██████████████████ 
-   ████      ████   
-   ████      ████   </pre>
-                            <div class="c-dim" style="font-size: 0.85rem">Opus 4.5 · Claude Team<br>~/ytx</div>
-                        </div>
-                        <div class="claude-splash-right">
-                            <div class="c-claude-bold">Tips for getting started</div>
-                            <div class="c-dim" style="margin-bottom: 1rem">Run /init to create a CLAUDE.md file with instructions for Claude</div>
-                            <div style="border-top: 1px solid rgba(217, 119, 87, 0.4); margin-bottom: 1rem;"></div>
-                            <div class="c-claude-bold">Recent activity</div>
-                            <div class="c-dim">No recent activity</div>
-                        </div>
-                    </div>`;
+                    line.innerHTML = `<br><div class="c-claude" style="margin-bottom: 1rem;">Claude Code v2.1.19</div>`;
                     demoTerminal.appendChild(line);
                     await new Promise(r => setTimeout(r, step.delay));
                 } else if (step.t === 'input') {
